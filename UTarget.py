@@ -4,17 +4,12 @@ import numpy as np
 # Selecting camera
 cap = cv2.VideoCapture(2)
 
-cap.set(3, 683)
-cap.set(4, 410)
+# Set frame size
+cap.set(3, 1024)
+cap.set(4, 615)
 
 # FOV of the camera
-FOV = 57.62158749
-
-
-# Stuff
-def nothing(x):
-    pass
-
+FOV = 125.718
 
 # Makes the window
 cv2.namedWindow('image')
@@ -23,7 +18,7 @@ cv2.namedWindow('image')
 HEIGHT, WIDTH, IDK = cap.read()[1].shape
 
 # DO this forever
-while (1):
+while True:
 
     # Get frame
     _, frame = cap.read()
@@ -40,6 +35,7 @@ while (1):
     res = cv2.bitwise_and(frame, frame, mask=mask)
 
     im2, cnts, hierarchy = cv2.findContours(mask.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+
     cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:2]
 
     rects = []
@@ -56,44 +52,44 @@ while (1):
             rect = (x, y, w, h)
             rects.append(rect)
 
-            if not points or (w * h > points[2] * points[3] and abs(len(approx) - 8) < abs(points[4] - 8)):
+            #w * h > points[2] * points[3] and
+            
+            if not points or (abs(len(approx) - 8) < abs(points[4] - 8)):
                 points = [x + w // 2, y + h // 2, w, h, len(approx)]
 
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 255, 0), 1)
             else:
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
 
-            cv2.putText(frame, 'I think this has %i Sides' % len(approx), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.4,
-                        (255, 255, 255), 1, cv2.LINE_AA)
+            cv2.putText(frame, 'I think this has %i sides' % len(approx), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.4,
+                        (0, 255, 0), 1, cv2.LINE_AA)
 
-    if points:
+    if points and points[4] > 4:
         mx = points[0]
         my = points[1]
 
         angle = FOV * (mx / WIDTH) - FOV / 2
 
         if angle > 0:
-            move = 'move right!'
+            move = 'move left! <='
         elif angle < 0:
-            move = 'move left!'
+            move = 'move right! =>'
         else:
-            move = 'don\'t move!'
+            move = 'don\'t move! </>'
 
-        cv2.circle(frame, (mx, my), 20, (0, 0, 255), 1)
+        #cv2.circle(frame, (mx, my), 20, (0, 0, 255), 1)
+
+        cv2.line(frame, (mx - 10, my), (mx + 10, my), (0, 0, 255), 1)
+        cv2.line(frame,  (mx, my - 10), (mx, my + 10), (0, 0, 255), 1)
+
         cv2.putText(frame,
-                    'Confidence: %3.2f%% | Angle to center: %2.2f degrees | (This means you %s)' % (points[4] / 8 * 100, angle, move),
-                    (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
+                    'Deviation: %i | Angle to center: %2.2f degrees | (This means you %s)' % (points[4] - 8, angle, move),
+                    (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1, cv2.LINE_AA)
         print(angle, mx - WIDTH // 2)
     else:
-        cv2.putText(frame, 'Target not found', (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1, cv2.LINE_AA)
+        cv2.putText(frame, 'Target not found', (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1, cv2.LINE_AA)
 
     cv2.line(frame, (WIDTH // 2, 0), (WIDTH // 2, HEIGHT), (0, 0, 255), 1)
-
-    """
-    for r in range(len(rects)):
-
-        for runner 
-    """
 
     res = cv2.bitwise_and(frame, frame, mask=mask)
 
