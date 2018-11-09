@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # Selecting camera
-cap = cv2.VideoCapture(2)
+cap = cv2.VideoCapture(0)
 
 # Set frame size
 cap.set(3, 1024)
@@ -53,11 +53,26 @@ while True:
             rects.append(rect)
 
             #w * h > points[2] * points[3] and
-            
+
             if not points or (abs(len(approx) - 8) < abs(points[4] - 8)):
                 points = [x + w // 2, y + h // 2, w, h, len(approx)]
 
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 255, 0), 1)
+
+                prev = ()
+
+                for i in approx:
+                   #print(i[0][0])
+
+                   if prev:
+                       cv2.line(frame, prev, (i[0][0], i[0][1]), (255, 255, 0), 1)
+
+                   prev = (i[0][0], i[0][1])
+
+                   cv2.line(frame, (i[0][0] - 10, i[0][1]), (i[0][0] + 10, i[0][1]), (255, 0, 255), 1)
+                   cv2.line(frame, (i[0][0], i[0][1] - 10), (i[0][0], i[0][1] + 10), (255, 0, 255), 1)
+
+
             else:
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
 
