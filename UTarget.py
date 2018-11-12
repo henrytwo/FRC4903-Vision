@@ -58,7 +58,7 @@ if __name__ == '__main__':
         halt_queue = multiprocessing.Queue()
 
         # Selecting camera
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(2)
 
         # Set frame size
         cap.set(3, 1024)
