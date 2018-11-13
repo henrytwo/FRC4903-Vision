@@ -37,6 +37,7 @@ def changeListener(key, value, isNew):
     elif key == '/Vision/time':
         offset = time.time() - value
         print('TIME OFFSET', offset)
+        table.putNumber('offset', offset)
 
     #halt_queue.put("GO")
 
@@ -44,7 +45,7 @@ if __name__ == '__main__':
 
     try:
         initializing()
-
+        #10.88.195.46
         NetworkTables.initialize(server='localhost')
         NetworkTables.addEntryListener(changeListener)
         table = NetworkTables.getTable("Vision")
@@ -58,7 +59,7 @@ if __name__ == '__main__':
         halt_queue = multiprocessing.Queue()
 
         # Selecting camera
-        cap = cv2.VideoCapture(2)
+        cap = cv2.VideoCapture(0)
 
         # Set frame size
         cap.set(3, 1024)
@@ -172,7 +173,7 @@ if __name__ == '__main__':
                             'Deviation: %i | Angle to center: %2.2f degrees | (This means you %s)' % (
                             points[4] - 8, angle, move),
                             (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1, cv2.LINE_AA)
-                print(angle, mx - WIDTH // 2)
+                #print(angle, mx - WIDTH // 2)
 
                 table.putNumber('heading', angle)
                 table.putNumber('lastUpdated', time.time() + offset)
@@ -185,6 +186,8 @@ if __name__ == '__main__':
 
                 if target_locked:
                     target_locked = False
+
+                    table.putNumber('heading', 0)
                     table.putNumber('locked', 0)
                     unlocked()
 

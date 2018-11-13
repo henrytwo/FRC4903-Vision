@@ -18,12 +18,22 @@ NetworkTables.addEntryListener(changeListener)
 
 table = NetworkTables.getTable("Vision")
 
+smell = False
+
 while True:
-    command = input('Enter command> ')
+
+    if smell:
+        command = 'sniff'
+    else:
+        command = input('Enter command> ')
 
     if command == 'scanon':
         table.putNumber('enabled', 1)
     elif command == 'scanoff':
         table.putNumber('enabled', 0)
     elif command == 'sniff':
-        print('\n\nEnabled: %s\nLast updated: %s\nHeading: %f\nLocked: %s\n\n' % ('TRUE' if table.getNumber('enabled', 0) else 'FALSE',table.getNumber('lastUpdated', 'N/A'), table.getNumber('heading', 0), 'TRUE' if table.getNumber('locked', 0) else 'FALSE'))
+        print('\n\nEnabled: %s\nLast updated: %s\nHeading: %f\nLocked: %s\nLatency: %fms\n\n' % ('TRUE' if table.getNumber('enabled', 0) else 'FALSE',table.getNumber('lastUpdated', 'N/A'), int(table.getNumber('heading', 0)), 'TRUE' if table.getNumber('locked', 0) else 'FALSE', 1000 * table.getNumber('offset', 0)))
+    elif command == 'smell':
+        smell = True
+    else:
+        print('Invalid instruction')
