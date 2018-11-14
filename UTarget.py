@@ -4,7 +4,15 @@ import multiprocessing
 import traceback
 import logging
 import time
+import sys
 from networktables import NetworkTables
+
+if len(sys.argv) == 2 and sys.argv[-1] == 'display':
+    HEADLESS = False
+else:
+    HEADLESS = True
+
+
 
 def locked():
     print('Locked on target')
@@ -69,7 +77,7 @@ if __name__ == '__main__':
         FOV = 125.718
 
         # Makes the window
-        cv2.namedWindow('image')
+        #cv2.namedWindow('image')
 
         # Size of the image
         HEIGHT, WIDTH, _ = cap.read()[1].shape
@@ -176,6 +184,7 @@ if __name__ == '__main__':
                 #print(angle, mx - WIDTH // 2)
 
                 table.putNumber('heading', angle)
+                table.putNumber('deviation', points[4] - 8)
                 table.putNumber('lastUpdated', time.time() + offset)
 
                 if not target_locked:
@@ -200,9 +209,10 @@ if __name__ == '__main__':
 
             res = cv2.bitwise_and(frame, frame, mask=mask)
 
-            cv2.imshow('frame', frame)
-            cv2.imshow('image', mask)
-            cv2.imshow('res', res)
+            if not HEADLESS:
+                cv2.imshow('frame', frame)
+                cv2.imshow('image', mask)
+                cv2.imshow('res', res)
 
             k = cv2.waitKey(5) & 0xFF
             if k == 27:
