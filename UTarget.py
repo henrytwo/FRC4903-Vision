@@ -5,12 +5,16 @@ import traceback
 import logging
 import time
 import sys
+import os
+import glob
 from networktables import NetworkTables
 
 if len(sys.argv) == 2 and sys.argv[-1] == 'display':
     HEADLESS = False
 else:
     HEADLESS = True
+
+camID = 0
 
 def locked():
     print('Locked on target')
@@ -27,8 +31,12 @@ def error():
 def initializing():
     print('Initializing')
 
+def network_ready():
+    print('Network Ready!')
+
 def changeListener(key, value, isNew):
     if key == '/Vision/enabled':
+        print('Scan mode:', value)
         halt_queue.put('GO' if value else 'STOP')
 
     elif key == '/Vision/time':
@@ -36,10 +44,28 @@ def changeListener(key, value, isNew):
         print('TIME OFFSET', offset)
         table.putNumber('offset', offset)
 
+        network_ready()
+
 if __name__ == '__main__':
 
     try:
         initializing()
+
+        camID = int(camID.split('video')[1])
+
+        # Try camera ID
+        cap = cv2.VideoCapture(camID)
+
+        os.system('v4l2-ctl -d %i -c brightness=30' % camID)
+        os.system('v4l2-ctl -d %i -c saturation=0' % camID)
+        os.system('v4l2-ctl -d %i -c exposure_auto=1' % camID)
+        os.system('v4l2-ctl -d %i -c exposure_absolute=0' % camID)
+
+        print('Cam ID %i succeeded' % camID)
+
+        # Set frame size
+        cap.set(3, 1024)
+        cap.set(4, 615)
 
         NetworkTables.initialize(server='localhost')
         NetworkTables.addEntryListener(changeListener)
@@ -53,17 +79,9 @@ if __name__ == '__main__':
 
         halt_queue = multiprocessing.Queue()
 
-        # Selecting camera
-        cap = cv2.VideoCapture(0)
-
-        # Set frame size
-        cap.set(3, 1024)
-        cap.set(4, 615)
-
         # Set upper and lower boundary
         upper_thresh = np.array([255, 255, 255])
         lower_thresh = np.array([0, 0, 126])
-
 
         # FOV of the camera
         FOV = 70
@@ -78,6 +96,7 @@ if __name__ == '__main__':
         while True:
 
             if halted:
+
                 disabled()
 
                 h = halt_queue.get()  # STOP HERE
@@ -180,7 +199,7 @@ if __name__ == '__main__':
                 if target_locked:
                     target_locked = False
 
-                    table.putNumber('heading', 0)
+                    table.putNumber('heading', 9000)
                     table.putNumber('locked', 0)
 
                     unlocked()
