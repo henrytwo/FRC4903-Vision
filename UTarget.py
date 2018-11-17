@@ -6,7 +6,7 @@ import logging
 import time
 import sys
 import os
-import glob
+import math
 from networktables import NetworkTables
 
 if len(sys.argv) == 2 and sys.argv[-1] == 'display':
@@ -50,8 +50,6 @@ if __name__ == '__main__':
 
     try:
         initializing()
-
-        camID = int(camID.split('video')[1])
 
         # Try camera ID
         cap = cv2.VideoCapture(camID)
@@ -167,12 +165,14 @@ if __name__ == '__main__':
                 mx = points[0]
                 my = points[1]
 
-                angle = FOV * (mx / WIDTH) - FOV / 2
+                #angle = FOV * (mx / WIDTH) - FOV / 2
+
+                angle = math.degrees(math.atan((2 * (mx - WIDTH / 2) * math.tan(math.radians(FOV // 2))) / WIDTH))
 
                 if not HEADLESS:
-                    if angle > 0:
+                    if angle < 0:
                         move = 'move left! <='
-                    elif angle < 0:
+                    elif angle > 0:
                         move = 'move right! =>'
                     else:
                         move = 'don\'t move! </>'
@@ -228,5 +228,8 @@ if __name__ == '__main__':
         traceback.print_exc()
         error()
 
-        cv2.destroyAllWindows()
-        cap.release()
+        try:
+            cv2.destroyAllWindows()
+            cap.release()
+        except:
+            pass
