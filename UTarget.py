@@ -67,22 +67,38 @@ def frame_reader():
 
     c = pygame.time.Clock()
 
+    halted = True
+
     while True:
         try:
+
+            if halted:
+
+                disabled()
+
+                h = halt_queue.get()  # STOP HERE
+
+                if h == 'GO':
+                    unlocked()
+                    halted = False
+
+            elif not halt_queue.empty():
+                if halt_queue.get() == 'STOP':
+                    halted = True
+
             _, frame = cap.read()
             frame_queue.put([frame, time.time()])
 
-            time.sleep(0.01)
+            #time.sleep(0.01)
         except:
             traceback.print_exc()
 
-        c.tick(30)
+        c.tick(15)
 
 if __name__ == '__main__':
 
     try:
         initializing()
-
 
         NetworkTables.initialize(server='localhost')
         NetworkTables.addEntryListener(changeListener)
@@ -107,7 +123,6 @@ if __name__ == '__main__':
         # Size of the image
         HEIGHT, WIDTH = 1024, 615
 
-        halted = True
         target_locked = False
 
         frame_process = threading.Thread(target=frame_reader, args=())
@@ -116,27 +131,15 @@ if __name__ == '__main__':
         # DO this forever
         while True:
 
-            if halted:
-
-                disabled()
-
-                h = halt_queue.get()  # STOP HERE
-
-                if h == 'GO':
-                    unlocked()
-                    halted = False
-
-            elif not halt_queue.empty():
-                if halt_queue.get() == 'STOP':
-                    halted = True
-
             # Get frame
             #_, frame = cap.read()
 
             frame, timestamp = frame_queue.get()
 
             # Skip
-            if time.time() - timestamp > 200:
+            if abs(time.time() - timestamp) > 200:
+                print('FRAME IS OUTDATED - DISCARDED')
+
                 continue
 
             # Convert to HSV
