@@ -1,9 +1,11 @@
 import cv2
 import numpy as np
 import multiprocessing
+import threading
 import traceback
 import logging
 import time
+import pygame
 import sys
 import os
 import math
@@ -13,6 +15,8 @@ if len(sys.argv) == 2 and sys.argv[-1] == 'display':
     HEADLESS = False
 else:
     HEADLESS = True
+
+print('Headless mode: ', HEADLESS)
 
 camID = 0
 
@@ -46,24 +50,39 @@ def changeListener(key, value, isNew):
 
         network_ready()
 
+def frame_reader():
+    # Try camera ID
+    cap = cv2.VideoCapture(camID)
+
+    os.system('v4l2-ctl -d %i -c brightness=30' % camID)
+    os.system('v4l2-ctl -d %i -c saturation=0' % camID)
+    os.system('v4l2-ctl -d %i -c exposure_auto=1' % camID)
+    os.system('v4l2-ctl -d %i -c exposure_absolute=0' % camID)
+
+    print('Cam ID %i succeeded' % camID)
+
+    # Set frame size
+    cap.set(3, HEIGHT)
+    cap.set(4, WIDTH)
+
+    c = pygame.time.Clock()
+
+    while True:
+        try:
+            _, frame = cap.read()
+            frame_queue.put([frame, time.time()])
+
+            time.sleep(0.01)
+        except:
+            traceback.print_exc()
+
+        c.tick(30)
+
 if __name__ == '__main__':
 
     try:
         initializing()
 
-        # Try camera ID
-        cap = cv2.VideoCapture(camID)
-
-        os.system('v4l2-ctl -d %i -c brightness=30' % camID)
-        os.system('v4l2-ctl -d %i -c saturation=0' % camID)
-        os.system('v4l2-ctl -d %i -c exposure_auto=1' % camID)
-        os.system('v4l2-ctl -d %i -c exposure_absolute=0' % camID)
-
-        print('Cam ID %i succeeded' % camID)
-
-        # Set frame size
-        cap.set(3, 1024)
-        cap.set(4, 615)
 
         NetworkTables.initialize(server='localhost')
         NetworkTables.addEntryListener(changeListener)
@@ -75,6 +94,7 @@ if __name__ == '__main__':
 
         offset = 0
 
+        frame_queue = multiprocessing.Queue()
         halt_queue = multiprocessing.Queue()
 
         # Set upper and lower boundary
@@ -85,10 +105,13 @@ if __name__ == '__main__':
         FOV = 70
 
         # Size of the image
-        HEIGHT, WIDTH, _ = cap.read()[1].shape
+        HEIGHT, WIDTH = 1024, 615
 
         halted = True
         target_locked = False
+
+        frame_process = threading.Thread(target=frame_reader, args=())
+        frame_process.start()
 
         # DO this forever
         while True:
@@ -108,7 +131,13 @@ if __name__ == '__main__':
                     halted = True
 
             # Get frame
-            _, frame = cap.read()
+            #_, frame = cap.read()
+
+            frame, timestamp = frame_queue.get()
+
+            # Skip
+            if time.time() - timestamp > 200:
+                continue
 
             # Convert to HSV
             hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
