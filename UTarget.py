@@ -1,11 +1,9 @@
 import cv2
 import numpy as np
 import multiprocessing
-import threading
 import traceback
 import logging
 import time
-import pygame
 import sys
 import os
 import math
@@ -15,8 +13,6 @@ if len(sys.argv) == 2 and sys.argv[-1] == 'display':
     HEADLESS = False
 else:
     HEADLESS = True
-
-print('Headless mode: ', HEADLESS)
 
 camID = 0
 
@@ -50,27 +46,52 @@ def changeListener(key, value, isNew):
 
         network_ready()
 
-def frame_reader():
-    # Try camera ID
-    cap = cv2.VideoCapture(camID)
+if __name__ == '__main__':
 
-    os.system('v4l2-ctl -d %i -c brightness=30' % camID)
-    os.system('v4l2-ctl -d %i -c saturation=0' % camID)
-    os.system('v4l2-ctl -d %i -c exposure_auto=1' % camID)
-    os.system('v4l2-ctl -d %i -c exposure_absolute=0' % camID)
+    try:
+        initializing()
 
-    print('Cam ID %i succeeded' % camID)
+        # Try camera ID
+        cap = cv2.VideoCapture(camID)
 
-    # Set frame size
-    cap.set(3, HEIGHT)
-    cap.set(4, WIDTH)
+        os.system('v4l2-ctl -d %i -c brightness=30' % camID)
+        os.system('v4l2-ctl -d %i -c saturation=0' % camID)
+        os.system('v4l2-ctl -d %i -c exposure_auto=1' % camID)
+        os.system('v4l2-ctl -d %i -c exposure_absolute=0' % camID)
 
-    c = pygame.time.Clock()
+        print('Cam ID %i succeeded' % camID)
 
-    halted = True
+        # Set frame size
+        cap.set(3, 1024)
+        cap.set(4, 615)
 
-    while True:
-        try:
+        NetworkTables.initialize(server='localhost')
+        NetworkTables.addEntryListener(changeListener)
+        table = NetworkTables.getTable("Vision")
+
+        table.putNumber('getTime', 1)
+
+        logging.basicConfig(level=logging.DEBUG)
+
+        offset = 0
+
+        halt_queue = multiprocessing.Queue()
+
+        # Set upper and lower boundary
+        upper_thresh = np.array([255, 255, 255])
+        lower_thresh = np.array([0, 0, 126])
+
+        # FOV of the camera
+        FOV = 70
+
+        # Size of the image
+        HEIGHT, WIDTH, _ = cap.read()[1].shape
+
+        halted = True
+        target_locked = False
+
+        # DO this forever
+        while True:
 
             if halted:
 
@@ -86,61 +107,8 @@ def frame_reader():
                 if halt_queue.get() == 'STOP':
                     halted = True
 
-            _, frame = cap.read()
-            frame_queue.put([frame, time.time()])
-
-            #time.sleep(0.01)
-        except:
-            traceback.print_exc()
-
-        c.tick(15)
-
-if __name__ == '__main__':
-
-    try:
-        initializing()
-
-        NetworkTables.initialize(server='localhost')
-        NetworkTables.addEntryListener(changeListener)
-        table = NetworkTables.getTable("Vision")
-
-        table.putNumber('getTime', 1)
-
-        logging.basicConfig(level=logging.DEBUG)
-
-        offset = 0
-
-        frame_queue = multiprocessing.Queue()
-        halt_queue = multiprocessing.Queue()
-
-        # Set upper and lower boundary
-        upper_thresh = np.array([255, 255, 255])
-        lower_thresh = np.array([0, 0, 126])
-
-        # FOV of the camera
-        FOV = 70
-
-        # Size of the image
-        HEIGHT, WIDTH = 1024, 615
-
-        target_locked = False
-
-        frame_process = threading.Thread(target=frame_reader, args=())
-        frame_process.start()
-
-        # DO this forever
-        while True:
-
             # Get frame
-            #_, frame = cap.read()
-
-            frame, timestamp = frame_queue.get()
-
-            # Skip
-            if abs(time.time() - timestamp) > 200:
-                print('FRAME IS OUTDATED - DISCARDED')
-
-                continue
+            _, frame = cap.read()
 
             # Convert to HSV
             hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
