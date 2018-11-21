@@ -115,7 +115,6 @@ if __name__ == '__main__':
 
             # Create mask
             mask = cv2.inRange(hsv, lower_thresh, upper_thresh)
-            res = cv2.bitwise_and(frame, frame, mask=mask)
 
             im2, cnts, hierarchy = cv2.findContours(mask.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -129,7 +128,7 @@ if __name__ == '__main__':
                 approx = cv2.approxPolyDP(c, 0.02 * peri, True)
                 x, y, w, h = cv2.boundingRect(approx)
 
-                if h >= 10 and w >= 10:
+                if h >= 30 and w >= 30:
                     # if height is enough
                     # create rectangle for bounding
                     rect = (x, y, w, h)
