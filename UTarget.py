@@ -9,6 +9,8 @@ import os
 import math
 from networktables import NetworkTables
 
+from TestShit import *
+
 if len(sys.argv) == 2 and sys.argv[-1] == 'display':
     HEADLESS = False
 else:
@@ -16,6 +18,7 @@ else:
 
 camID = 0
 
+"""
 def locked():
     print('Locked on target')
 
@@ -33,6 +36,7 @@ def initializing():
 
 def network_ready():
     print('Network Ready!')
+"""
 
 def changeListener(key, value, isNew):
     if key == '/Vision/enabled':
@@ -44,7 +48,7 @@ def changeListener(key, value, isNew):
         print('TIME OFFSET', offset)
         table.putNumber('offset', offset)
 
-        network_ready()
+        #network_ready()
 
 if __name__ == '__main__':
 
@@ -65,7 +69,7 @@ if __name__ == '__main__':
         cap.set(3, 1024)
         cap.set(4, 615)
 
-        NetworkTables.initialize(server='localhost')
+        NetworkTables.initialize(server='10.88.221.100')
         NetworkTables.addEntryListener(changeListener)
         table = NetworkTables.getTable("Vision")
 
