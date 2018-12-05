@@ -17,27 +17,6 @@ else:
     HEADLESS = True
 
 camID = 0
-
-"""
-def locked():
-    print('Locked on target')
-
-def unlocked():
-    print('Target not locked')
-
-def disabled():
-    print('Disabled')
-
-def error():
-    print('Something went wrong')
-
-def initializing():
-    print('Initializing')
-
-def network_ready():
-    print('Network Ready!')
-"""
-
 def changeListener(key, value, isNew):
     if key == '/Vision/enabled':
         print('Scan mode:', value)
@@ -94,12 +73,16 @@ if __name__ == '__main__':
         halted = True
         target_locked = False
 
+        prev_time = 0
+
         # DO this forever
         while True:
 
+            prev_time = time.time()
+
             if halted:
 
-                disabled()
+                #disabled()
 
                 h = halt_queue.get()  # STOP HERE
 
@@ -226,6 +209,8 @@ if __name__ == '__main__':
             k = cv2.waitKey(5) & 0xFF
             if k == 27:
                 break
+
+            print(time.time() - prev_time)
 
     except:
         traceback.print_exc()
