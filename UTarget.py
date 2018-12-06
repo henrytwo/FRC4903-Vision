@@ -9,7 +9,7 @@ import os
 import math
 from networktables import NetworkTables
 
-from TestShit import *
+from GPIOInterface import *
 
 if len(sys.argv) == 2 and sys.argv[-1] == 'display':
     HEADLESS = False
@@ -62,8 +62,8 @@ if __name__ == '__main__':
         halt_queue = multiprocessing.Queue()
 
         # Set upper and lower boundary
-        upper_thresh = np.array([255, 255, 255])
-        lower_thresh = np.array([74, 202, 0])
+        upper_thresh = np.array([82, 255, 255])
+        lower_thresh = np.array([71, 228, 30])
 
         # FOV of the camera
         FOV = 70
@@ -105,7 +105,6 @@ if __name__ == '__main__':
             mask = cv2.inRange(hsv, lower_thresh, upper_thresh)
 
             im2, cnts, hierarchy = cv2.findContours(mask.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-
             cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:2]
 
             rects = []
