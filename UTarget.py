@@ -16,7 +16,8 @@ if len(sys.argv) == 2 and sys.argv[-1] == 'display':
 else:
     HEADLESS = True
 
-camID = 0
+camID = 2
+
 def changeListener(key, value, isNew):
     if key == '/Vision/enabled':
         print('Scan mode:', value)
@@ -32,13 +33,13 @@ def changeListener(key, value, isNew):
 if __name__ == '__main__':
 
     try:
-        initializing()
+        #initializing()
 
         # Try camera ID
         cap = cv2.VideoCapture(camID)
 
-        os.system('v4l2-ctl -d %i -c brightness=30' % camID)
-        os.system('v4l2-ctl -d %i -c saturation=0' % camID)
+        #os.system('v4l2-ctl -d %i -c brightness=30' % camID)
+        #os.system('v4l2-ctl -d %i -c saturation=0' % camID)
         os.system('v4l2-ctl -d %i -c exposure_auto=1' % camID)
         os.system('v4l2-ctl -d %i -c exposure_absolute=0' % camID)
 
@@ -62,7 +63,7 @@ if __name__ == '__main__':
 
         # Set upper and lower boundary
         upper_thresh = np.array([255, 255, 255])
-        lower_thresh = np.array([0, 0, 126])
+        lower_thresh = np.array([74, 202, 0])
 
         # FOV of the camera
         FOV = 70
@@ -87,7 +88,7 @@ if __name__ == '__main__':
                 h = halt_queue.get()  # STOP HERE
 
                 if h == 'GO':
-                    unlocked()
+                    #unlocked()
                     halted = False
 
             elif not halt_queue.empty():
@@ -127,6 +128,7 @@ if __name__ == '__main__':
                         if not HEADLESS:
                             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 255, 0), 1)
 
+                            """
                             prev = ()
 
                             for i in approx:
@@ -137,7 +139,9 @@ if __name__ == '__main__':
 
                                 cv2.line(frame, (i[0][0] - 10, i[0][1]), (i[0][0] + 10, i[0][1]), (255, 0, 255), 1)
                                 cv2.line(frame, (i[0][0], i[0][1] - 10), (i[0][0], i[0][1] + 10), (255, 0, 255), 1)
+                            """
 
+                            cv2.drawContours(frame, approx, 0, (255, 255, 0), 2)
                     else:
 
                         if not HEADLESS:
@@ -147,7 +151,7 @@ if __name__ == '__main__':
                         cv2.putText(frame, 'I think this has %i sides' % len(approx), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.4,
                                 (0, 255, 0), 1, cv2.LINE_AA)
 
-            if points and points[4] > 4:
+            if points and 10 > points[4] > 6:
                 mx = points[0]
                 my = points[1]
 
@@ -179,7 +183,7 @@ if __name__ == '__main__':
                     target_locked = True
                     table.putNumber('locked', 1)
 
-                    locked()
+                    #locked()
             else:
 
                 if target_locked:
@@ -188,7 +192,7 @@ if __name__ == '__main__':
                     table.putNumber('heading', 9000)
                     table.putNumber('locked', 0)
 
-                    unlocked()
+                    #unlocked()
 
                 table.putNumber('lastUpdated', time.time() + offset)
 
@@ -214,7 +218,7 @@ if __name__ == '__main__':
 
     except:
         traceback.print_exc()
-        error()
+        #error()
 
         try:
             cv2.destroyAllWindows()
