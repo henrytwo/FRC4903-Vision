@@ -18,6 +18,7 @@ else:
 
 camID = 0
 
+
 def changeListener(key, value, isNew):
     if key == '/Vision/enabled':
         print('Scan mode:', value)
@@ -28,12 +29,13 @@ def changeListener(key, value, isNew):
         print('TIME OFFSET', offset)
         table.putNumber('offset', offset)
 
-        #network_ready()
+        # network_ready()
+
 
 if __name__ == '__main__':
 
     try:
-        #initializing()
+        # initializing()
 
         # Try camera ID
         cap = cv2.VideoCapture(camID)
@@ -83,12 +85,12 @@ if __name__ == '__main__':
 
             if halted:
 
-                #disabled()
+                # disabled()
 
                 h = halt_queue.get()  # STOP HERE
 
                 if h == 'GO':
-                    #unlocked()
+                    # unlocked()
                     halted = False
 
             elif not halt_queue.empty():
@@ -122,12 +124,9 @@ if __name__ == '__main__':
                     rect = (x, y, w, h)
                     rects.append(rect)
 
-                    if not points or (abs(len(approx) - 8) < abs(points[4] - 8)):
-                        temp_points = [x + w // 2, y + h // 2, w, h, len(approx)]
-                        temp_area = w * h
-
-                        if temp_area > max_area:
-                            points = temp_points
+                    if (not points or (abs(len(approx) - 8) < abs(points[4] - 8))) and w * h > max_area:
+                        points = [x + w // 2, y + h // 2, w, h, len(approx)]
+                        max_area = w * h
 
                         if not HEADLESS:
                             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 255, 0), 1)
@@ -143,22 +142,22 @@ if __name__ == '__main__':
                                 cv2.line(frame, (i[0][0] - 10, i[0][1]), (i[0][0] + 10, i[0][1]), (255, 0, 255), 1)
                                 cv2.line(frame, (i[0][0], i[0][1] - 10), (i[0][0], i[0][1] + 10), (255, 0, 255), 1)
 
-
-                            #cv2.drawContours(frame, approx, 0, (255, 255, 0), 2)
+                            # cv2.drawContours(frame, approx, 0, (255, 255, 0), 2)
                     else:
 
                         if not HEADLESS:
                             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
 
                     if not HEADLESS:
-                        cv2.putText(frame, 'I think this has %i sides' % len(approx), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.4,
-                                (0, 255, 0), 1, cv2.LINE_AA)
+                        cv2.putText(frame, 'I think this has %i sides and dis dis big: %i' % (len(approx), w * h),
+                                    (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.4,
+                                    (0, 255, 0), 1, cv2.LINE_AA)
 
             if points and 10 > points[4] > 4:
                 mx = points[0]
                 my = points[1]
 
-                #angle = FOV * (mx / WIDTH) - FOV / 2
+                # angle = FOV * (mx / WIDTH) - FOV / 2
 
                 angle = math.degrees(math.atan((2 * (mx - WIDTH / 2) * math.tan(math.radians(FOV // 2))) / WIDTH))
 
@@ -175,7 +174,7 @@ if __name__ == '__main__':
 
                     cv2.putText(frame,
                                 'Deviation: %i | Angle to center: %2.2f degrees | (This means you %s)' % (
-                                points[4] - 8, angle, move),
+                                    points[4] - 8, angle, move),
                                 (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1, cv2.LINE_AA)
 
                 table.putNumber('heading', angle)
@@ -186,7 +185,7 @@ if __name__ == '__main__':
                     target_locked = True
                     table.putNumber('locked', 1)
 
-                    #locked()
+                    # locked()
             else:
 
                 if target_locked:
@@ -195,14 +194,13 @@ if __name__ == '__main__':
                     table.putNumber('heading', 9000)
                     table.putNumber('locked', 0)
 
-                    #unlocked()
+                    # unlocked()
 
                 table.putNumber('lastUpdated', time.time() + offset)
 
                 if not HEADLESS:
                     cv2.putText(frame, 'Target not found', (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1,
-                            cv2.LINE_AA)
-
+                                cv2.LINE_AA)
 
             if not HEADLESS:
                 cv2.line(frame, (WIDTH // 2, 0), (WIDTH // 2, HEIGHT), (0, 0, 255), 1)
@@ -221,7 +219,7 @@ if __name__ == '__main__':
 
     except:
         traceback.print_exc()
-        #error()
+        # error()
 
         try:
             cv2.destroyAllWindows()
