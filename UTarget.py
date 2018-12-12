@@ -39,7 +39,7 @@ if __name__ == '__main__':
         cap = cv2.VideoCapture(camID)
 
         #os.system('v4l2-ctl -d %i -c brightness=30' % camID)
-        #os.system('v4l2-ctl -d %i -c saturation=0' % camID)
+        os.system('v4l2-ctl -d %i -c saturation=100' % camID)
         os.system('v4l2-ctl -d %i -c exposure_auto=1' % camID)
         os.system('v4l2-ctl -d %i -c exposure_absolute=0' % camID)
 
@@ -62,8 +62,8 @@ if __name__ == '__main__':
         halt_queue = multiprocessing.Queue()
 
         # Set upper and lower boundary
-        upper_thresh = np.array([82, 255, 255])
-        lower_thresh = np.array([71, 228, 30])
+        upper_thresh = np.array([255, 255, 255])
+        lower_thresh = np.array([66, 190, 0])
 
         # FOV of the camera
         FOV = 70
@@ -127,7 +127,6 @@ if __name__ == '__main__':
                         if not HEADLESS:
                             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 255, 0), 1)
 
-                            """
                             prev = ()
 
                             for i in approx:
@@ -138,9 +137,9 @@ if __name__ == '__main__':
 
                                 cv2.line(frame, (i[0][0] - 10, i[0][1]), (i[0][0] + 10, i[0][1]), (255, 0, 255), 1)
                                 cv2.line(frame, (i[0][0], i[0][1] - 10), (i[0][0], i[0][1] + 10), (255, 0, 255), 1)
-                            """
 
-                            cv2.drawContours(frame, approx, 0, (255, 255, 0), 2)
+
+                            #cv2.drawContours(frame, approx, 0, (255, 255, 0), 2)
                     else:
 
                         if not HEADLESS:
