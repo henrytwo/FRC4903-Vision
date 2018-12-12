@@ -16,7 +16,7 @@ if len(sys.argv) == 2 and sys.argv[-1] == 'display':
 else:
     HEADLESS = True
 
-camID = 2
+camID = 0
 
 def changeListener(key, value, isNew):
     if key == '/Vision/enabled':
@@ -38,7 +38,7 @@ if __name__ == '__main__':
         # Try camera ID
         cap = cv2.VideoCapture(camID)
 
-        #os.system('v4l2-ctl -d %i -c brightness=30' % camID)
+        os.system('v4l2-ctl -d %i -c white_balance_temperature_auto=0' % camID)
         os.system('v4l2-ctl -d %i -c saturation=100' % camID)
         os.system('v4l2-ctl -d %i -c exposure_auto=1' % camID)
         os.system('v4l2-ctl -d %i -c exposure_absolute=0' % camID)
@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
         # Set upper and lower boundary
         upper_thresh = np.array([255, 255, 255])
-        lower_thresh = np.array([66, 190, 0])
+        lower_thresh = np.array([58, 164, 50])
 
         # FOV of the camera
         FOV = 70
@@ -115,7 +115,7 @@ if __name__ == '__main__':
                 approx = cv2.approxPolyDP(c, 0.02 * peri, True)
                 x, y, w, h = cv2.boundingRect(approx)
 
-                if h >= 30 and w >= 30:
+                if h >= 20 and w >= 20:
                     # if height is enough
                     # create rectangle for bounding
                     rect = (x, y, w, h)
