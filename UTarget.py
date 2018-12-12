@@ -109,6 +109,7 @@ if __name__ == '__main__':
 
             rects = []
             points = []
+            max_area = -1
 
             for c in cnts:
                 peri = cv2.arcLength(c, True)
@@ -122,7 +123,11 @@ if __name__ == '__main__':
                     rects.append(rect)
 
                     if not points or (abs(len(approx) - 8) < abs(points[4] - 8)):
-                        points = [x + w // 2, y + h // 2, w, h, len(approx)]
+                        temp_points = [x + w // 2, y + h // 2, w, h, len(approx)]
+                        temp_area = w * h
+
+                        if temp_area > max_area:
+                            points = temp_points
 
                         if not HEADLESS:
                             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 255, 0), 1)
@@ -149,7 +154,7 @@ if __name__ == '__main__':
                         cv2.putText(frame, 'I think this has %i sides' % len(approx), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.4,
                                 (0, 255, 0), 1, cv2.LINE_AA)
 
-            if points and 10 > points[4] > 6:
+            if points and 10 > points[4] > 4:
                 mx = points[0]
                 my = points[1]
 
