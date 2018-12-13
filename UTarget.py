@@ -215,7 +215,7 @@ if __name__ == '__main__':
             if k == 27:
                 break
 
-            print(time.time() - prev_time)
+            #print(time.time() - prev_time)
 
     except:
         traceback.print_exc()
