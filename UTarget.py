@@ -16,7 +16,7 @@ if len(sys.argv) == 2 and sys.argv[-1] == 'display':
 else:
     HEADLESS = True
 
-camID = 0
+camID = 2
 
 
 def changeListener(key, value, isNew):
@@ -51,7 +51,7 @@ if __name__ == '__main__':
         cap.set(3, 1024)
         cap.set(4, 615)
 
-        NetworkTables.initialize(server='10.88.221.100')
+        NetworkTables.initialize(server='localhost')
         NetworkTables.addEntryListener(changeListener)
         table = NetworkTables.getTable("Vision")
 
