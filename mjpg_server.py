@@ -1,14 +1,11 @@
-#!/usr/bin/python
-'''
-	Author: Igor Maculan - n3wtron@gmail.com
-	A Simple mjpg stream http server
-'''
+#pip3 install opencv-python
+#sudo apt install libopencv-dev python3-opencv
+#sudo apt install libopencv-dev python-opencv
+
 import cv2
 from PIL import Image
-import threading
 from http.server import BaseHTTPRequestHandler,HTTPServer
 from socketserver import ThreadingMixIn
-#from io import StringIO
 from io import BytesIO
 import time
 import datetime
@@ -28,12 +25,13 @@ class CamHandler(BaseHTTPRequestHandler):
 				try:
 					rc,img = capture.read()
 
+					if not rc:
+						continue
+
 					cv2.putText(img, str(datetime.datetime.now()),
 								(10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.3,
 								(255, 255, 255), 1, cv2.LINE_AA)
 
-					if not rc:
-						continue
 					imgRGB=cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
 					jpg = Image.fromarray(imgRGB)
 
@@ -65,6 +63,7 @@ class CamHandler(BaseHTTPRequestHandler):
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 	"""Handle requests in a separate thread."""
 
+
 def main():
 	global capture
 	capture = cv2.VideoCapture(0)
@@ -73,7 +72,7 @@ def main():
 
 	try:
 		server = ThreadedHTTPServer((HOST, PORT), CamHandler)
-		print("server started")
+		print("Server started @ (%s:%i)" % (HOST, PORT))
 		server.serve_forever()
 	except KeyboardInterrupt:
 		capture.release()
