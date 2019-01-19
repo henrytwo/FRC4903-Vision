@@ -11,6 +11,7 @@ from socketserver import ThreadingMixIn
 #from io import StringIO
 from io import BytesIO
 import time
+import datetime
 capture=None
 
 HOST = '192.168.0.141'
@@ -26,6 +27,10 @@ class CamHandler(BaseHTTPRequestHandler):
 			while True:
 				try:
 					rc,img = capture.read()
+
+					cv2.putText(img, str(datetime.datetime.now()),
+								(10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.3,
+								(255, 255, 255), 1, cv2.LINE_AA)
 
 					if not rc:
 						continue
@@ -63,9 +68,8 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 def main():
 	global capture
 	capture = cv2.VideoCapture(0)
-	capture.set(cv2.CAP_PROP_FRAME_WIDTH, 320);
-	capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 240);
-	global img
+	capture.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
+	capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
 
 	try:
 		server = ThreadedHTTPServer((HOST, PORT), CamHandler)
