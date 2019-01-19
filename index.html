@@ -1,0 +1,62 @@
+<html>
+<head>
+    <style>
+        #upper-highlight {{
+            height: 60px;
+            background-color: #000033;
+            color: white;
+            padding-left: 30px;
+            padding-right: 30px;
+            padding-top: 20px;
+            padding-bottom: 20px;
+        }}
+
+        * {{
+            font-family: Arial;
+        }}
+
+        h1, h2, h3, h4 {{
+            margin: 0;
+        }}
+
+        #time {{
+            top: 20px;
+            right: 30px;
+            position: absolute;
+        }}
+    </style>
+
+
+</head>
+<body style="padding: 0; margin: 0;">
+    <div id="upper-highlight">
+        <h1>FRC 4903 Vision Dashboard</h1>
+        <p style="line-height: 0.05em"><i>"Dedicated to the great leader"</i></p>
+
+        <p id="time">Holdon... getting the time</p>
+    </div>
+
+    <div style="margin: 30px">
+        <div style="width: 49.9%; height: auto; float: left;">
+            <h2>Primary Camera</h2>
+            <img src="http://{HOST}:{PORT}/cam.mjpg" style="width: 100%"/>
+        </div>
+        <div style="width: 49.9%; height: auto; float: right;">
+            <h2>Zombie Camera</h2>
+            <img src="http://{HOST}:{PORT}/cam.mjpg" style="width: 100%"/>
+        </div>
+    </div>
+</body>
+
+<script>
+
+    function setTime() {{
+        document.getElementById("time").innerHTML = Date()
+    }}
+
+    setTime();
+
+    setInterval(setTime, 1000);
+
+</script>
+</html>

@@ -13,9 +13,12 @@ from io import BytesIO
 import time
 capture=None
 
+HOST = '192.168.0.141'
+PORT = 8080
+
 class CamHandler(BaseHTTPRequestHandler):
 	def do_GET(self):
-		#print('lol?', self.path)
+
 		if self.path.endswith('.mjpg'):
 			self.send_response(200)
 			self.send_header('Content-type','multipart/x-mixed-replace; boundary=--jpgboundary')
@@ -43,14 +46,15 @@ class CamHandler(BaseHTTPRequestHandler):
 				except KeyboardInterrupt:
 					break
 			return
-		if self.path.endswith('.html'):
-			self.send_response(200)
-			self.send_header('Content-type','text/html')
-			self.end_headers()
-			self.wfile.write(b'<html><head></head><body>lol')
-			self.wfile.write(b'<img src="http://192.168.0.141:8080/cam.mjpg" style="width: 100vw; height: auto;"/>')
-			self.wfile.write(b'</body></html>')
-			return
+		else:
+			with open('index.html', 'r') as file:
+				page = file.read().format(HOST=HOST, PORT=PORT).encode()
+
+				self.send_response(200)
+				self.send_header('Content-type','text/html')
+				self.end_headers()
+				self.wfile.write(page)
+				return
 
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
@@ -61,11 +65,10 @@ def main():
 	capture = cv2.VideoCapture(0)
 	capture.set(cv2.CAP_PROP_FRAME_WIDTH, 320);
 	capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 240);
-	#capture.set(cv2.cv.CV_CAP_PROP_SATURATION,0.2);
 	global img
 
 	try:
-		server = ThreadedHTTPServer(('192.168.0.141', 8080), CamHandler)
+		server = ThreadedHTTPServer((HOST, PORT), CamHandler)
 		print("server started")
 		server.serve_forever()
 	except KeyboardInterrupt:
