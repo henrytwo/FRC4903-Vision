@@ -19,9 +19,9 @@ class AutoTarget:
         self.Y_DEVIATION = 100
         self.X_DEVIATION = 200
 
-        self.frame = np.zeros((self.H, self.W, 3))
-        self.mask = np.zeros((self.H, self.W, 3))
-        self.res = np.zeros((self.H, self.W, 3))
+        self.frame = np.ones((self.H, self.W, 3), dtype=np.uint8)
+        self.mask = np.ones((self.H, self.W, 3), dtype=np.uint8)
+        self.res = np.ones((self.H, self.W, 3), dtype=np.uint8)
 
         cv2.putText(self.frame, 'No signal',
                     (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4,
@@ -51,6 +51,15 @@ class AutoTarget:
         self.lower_thresh = np.array([58, 164, 50])
 
         threading.Thread(target=self.run, args=()).start()
+
+    def get_frame(self):
+        return self.frame
+
+    def get_mask(self):
+        return cv2.cvtColor(self.mask,cv2.COLOR_GRAY2RGB)
+
+    def get_res(self):
+        return self.res
 
     def run(self):
         while True:
@@ -92,7 +101,7 @@ class AutoTarget:
                     if abs(len(approx) - 4) <= 2:
                         points = [x + w // 2, y + h // 2, x, y, w, h, len(approx)]
 
-                        if not HEADLESS:
+                        if not self.headless:
 
                             prev = ()
 
@@ -111,7 +120,7 @@ class AutoTarget:
 
                                 count += 1
 
-                                if not HEADLESS:
+                                if not self.headless:
 
                                     cv2.putText(self.frame,
                                                 '%i' % (count),
@@ -160,7 +169,7 @@ class AutoTarget:
                 else:
                     continue
 
-                if not HEADLESS:
+                if not self.headless:
 
                     cv2.circle(self.frame, (left_piece[0], left_piece[1]), 10, (255, 0, 0), 1)
                     cv2.circle(self.frame, (right_piece[0], right_piece[1]), 10, (255, 0, 0), 1)
@@ -184,7 +193,7 @@ class AutoTarget:
 
                 angle = math.degrees(math.atan((2 * (mx - WIDTH / 2) * math.tan(math.radians(FOV // 2))) / WIDTH))
 
-                if not HEADLESS:
+                if not self.headless:
                     if angle < 0:
                         move = 'move left! <='
                     elif angle > 0:
@@ -221,20 +230,15 @@ class AutoTarget:
 
                 table.putNumber('lastUpdated', time.time() + offset)
 
-                if not HEADLESS:
+                if not self.headless:
                     cv2.putText(self.frame, 'Target not found', (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1,
                                 cv2.LINE_AA)
             """
 
-            if not HEADLESS:
+            if not self.headless:
                 cv2.line(self.frame, (self.WIDTH // 2, 0), (self.WIDTH // 2, self.HEIGHT), (0, 0, 255), 1)
 
                 self.res = cv2.bitwise_and(self.frame, self.frame, mask=self.mask)
-
-        try:
-            self.cap.release()
-        except:
-            pass
 
 if __name__ == '__main__':
 
