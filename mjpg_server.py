@@ -17,6 +17,9 @@ capture=None
 HOST = '192.168.0.141'
 PORT = 8080
 
+CAM_AUTO = 2
+CAM_TELEOP = 0
+
 class CamHandler(BaseHTTPRequestHandler):
 	def do_GET(self):
 
@@ -94,11 +97,11 @@ def teleopFrame():
 
 def main():
 	global capture, frames
-	capture = cv2.VideoCapture(0)
+	capture = cv2.VideoCapture(CAM_TELEOP)
 	capture.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
 	capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
 
-	at = AutoTarget(False, 2)
+	at = AutoTarget(False, CAM_AUTO)
 
 	frames = {
 		'teleopFrame':  {
