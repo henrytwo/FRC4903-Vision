@@ -13,15 +13,15 @@ class AutoTarget:
         self.headless = headless
         self.FOV = 70
 
-        self.W = 1024
-        self.H = 615
+        self.WIDTH = 320 #1024
+        self.HEIGHT = 240 #615
 
         self.Y_DEVIATION = 100
         self.X_DEVIATION = 200
 
-        self.frame = np.ones((self.H, self.W, 3), dtype=np.uint8)
-        self.mask = np.ones((self.H, self.W, 3), dtype=np.uint8)
-        self.res = np.ones((self.H, self.W, 3), dtype=np.uint8)
+        self.frame = np.ones((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
+        self.mask = np.ones((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
+        self.res = np.ones((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
 
         cv2.putText(self.frame, 'No signal',
                     (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4,
@@ -42,10 +42,13 @@ class AutoTarget:
 
         print('Cam ID %i succeeded' % camID)
 
-        self.cap.set(3, self.W)
-        self.cap.set(4, self.H)
+        #self.cap.set(3, self.W)
+        #self.cap.set(4, self.H)
 
-        self.HEIGHT, self.WIDTH, _ = self.cap.read()[1].shape
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.WIDTH)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.HEIGHT)
+
+        #self.HEIGHT, self.WIDTH, _ = self.cap.read()[1].shape
 
         self.upper_thresh = np.array([255, 255, 255])
         self.lower_thresh = np.array([58, 164, 50])
