@@ -6,6 +6,7 @@ import time
 import sys
 import os
 import math
+import Communicator
 
 class AutoTarget:
     def __init__(self, headless, camID):

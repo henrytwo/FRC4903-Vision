@@ -2,6 +2,16 @@
 #sudo apt install libopencv-dev python3-opencv
 #sudo apt install libopencv-dev python-opencv
 
+#Instructions for installing on pi
+#pip3 install opencv-python
+#sudo apt-get install libcblas-dev
+#sudo apt-get install libhdf5-dev
+#sudo apt-get install libhdf5-serial-dev
+#sudo apt-get install libatlas-base-dev
+#sudo apt-get install libjasper-dev
+#sudo apt-get install libqtgui4
+#sudo apt-get install libqt4-test
+
 import cv2
 from PIL import Image
 from http.server import BaseHTTPRequestHandler,HTTPServer
