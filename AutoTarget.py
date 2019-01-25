@@ -14,8 +14,8 @@ class AutoTarget:
         self.headless = headless
         self.FOV = 70
 
-        self.WIDTH = 320 #1024
-        self.HEIGHT = 240 #615
+        self.WIDTH = 640 #320 #1024
+        self.HEIGHT = 480 #240 #615
 
         self.Y_DEVIATION = 100
         self.X_DEVIATION = 200
@@ -37,9 +37,12 @@ class AutoTarget:
                     (255, 255, 255), 1, cv2.LINE_AA)
 
         os.system('v4l2-ctl -d %i -c white_balance_temperature_auto=0' % camID)
+        os.system('v4l2-ctl -d %i -c white_balance_temperature=0' % camID)
         os.system('v4l2-ctl -d %i -c saturation=100' % camID)
+        os.system('v4l2-ctl -d %i -c contrast=100' % camID)
         os.system('v4l2-ctl -d %i -c exposure_auto=1' % camID)
         os.system('v4l2-ctl -d %i -c exposure_absolute=0' % camID)
+        os.system('v4l2-ctl -d %i -c brightness=50' % camID)
 
         print('Cam ID %i succeeded' % camID)
 
@@ -51,8 +54,10 @@ class AutoTarget:
 
         #self.HEIGHT, self.WIDTH, _ = self.cap.read()[1].shape
 
-        self.upper_thresh = np.array([255, 255, 255])
-        self.lower_thresh = np.array([58, 164, 50])
+        #self.upper_thresh = np.array([255, 255, 255])
+        self.upper_thresh = np.array([103, 255, 255])
+        #self.lower_thresh = np.array([58, 164, 50])
+        self.lower_thresh = np.array([75, 255, 136])
 
         threading.Thread(target=self.run, args=()).start()
 
@@ -80,11 +85,16 @@ class AutoTarget:
             cnts = sorted(cnts, key=cv2.contourArea, reverse=True)
 
             rects = []
-            points = []
 
             left = []
             right = []
-            group = []
+
+            largest_area = -1
+            largest_x = 0
+            largest_y = 0
+
+            left_h = -1
+            right_h = -1
 
             for c in cnts:
                 peri = cv2.arcLength(c, True)
@@ -98,7 +108,7 @@ class AutoTarget:
                 longest = -1
                 longest_coords = []
 
-                if h >= 20 and w >= 20:
+                if h >= 10 and w >= 10:
                     rect = (x, y, w, h)
                     rects.append(rect)
 

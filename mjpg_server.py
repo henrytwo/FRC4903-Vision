@@ -24,10 +24,10 @@ from AutoTarget import *
 
 capture=None
 
-HOST = '192.168.0.141'
+HOST = '127.0.0.1'
 PORT = 8080
 
-CAM_AUTO = 2
+CAM_AUTO = 4
 CAM_TELEOP = 0
 
 class CamHandler(BaseHTTPRequestHandler):
