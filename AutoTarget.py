@@ -20,6 +20,8 @@ class AutoTarget:
         self.Y_DEVIATION = 100
         self.X_DEVIATION = 200
 
+        self.TARGET_RATIO = 14.5/6
+
         self.frame = np.ones((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
         self.mask = np.ones((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
         self.res = np.ones((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
@@ -89,12 +91,8 @@ class AutoTarget:
             left = []
             right = []
 
-            largest_area = -1
-            largest_x = 0
-            largest_y = 0
-
-            left_h = -1
-            right_h = -1
+            best_group = [(-1, -1, -1, -1), 0, 0]
+            min_deviation = 999999
 
             for c in cnts:
                 peri = cv2.arcLength(c, True)
@@ -108,11 +106,11 @@ class AutoTarget:
                 longest = -1
                 longest_coords = []
 
-                if h >= 10 and w >= 10:
+                if h >= 10 and w >= 3:
                     rect = (x, y, w, h)
                     rects.append(rect)
 
-                    if abs(len(approx) - 4) <= 2:
+                    if abs(len(approx) - 4) <= 5:
                         points = [x + w // 2, y + h // 2, x, y, w, h, len(approx)]
 
                         if not self.headless:
@@ -120,6 +118,12 @@ class AutoTarget:
                             prev = ()
 
                             count = 0
+
+                            if not self.headless:
+                                cv2.putText(self.frame,
+                                            'Num sides: %i' % (len(approx)),
+                                            (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.4,
+                                            (255, 255, 255), 1, cv2.LINE_AA)
 
                             for i in approx:
                                 if prev:
@@ -188,8 +192,17 @@ class AutoTarget:
                     cv2.circle(self.frame, (left_piece[0], left_piece[1]), 10, (255, 0, 0), 1)
                     cv2.circle(self.frame, (right_piece[0], right_piece[1]), 10, (255, 0, 0), 1)
 
+                    cv2.putText(self.frame, 'LEFTH: %i' % (left_piece[5]),
+                                (left_piece[2], 100), cv2.FONT_HERSHEY_SIMPLEX, 0.4,
+                                (255, 255, 255), 1, cv2.LINE_AA)
+
                     cv2.rectangle(self.frame, (left_piece[2], left_piece[3]),
                                   (left_piece[2] + left_piece[4], left_piece[3] + left_piece[5]), (255, 0, 0), 1)
+
+                    cv2.putText(self.frame, 'RIGHTH: %i'% (right_piece[5]),
+                                (right_piece[2], 100), cv2.FONT_HERSHEY_SIMPLEX, 0.4,
+                                (255, 255, 255), 1, cv2.LINE_AA)
+
                     cv2.rectangle(self.frame, (right_piece[2], right_piece[3]),
                                   (right_piece[2] + right_piece[4], right_piece[3] + right_piece[5]), (0, 255, 0), 1)
 
@@ -197,6 +210,20 @@ class AutoTarget:
                     right_piece[2] + right_piece[4], max(left_piece[3] + left_piece[5], right_piece[3] + right_piece[5])),
                                   (255, 255, 0), 1)
 
+                    rect = (left_piece[2], min(left_piece[3], right_piece[3]), right_piece[2] + right_piece[4] - left_piece[2], max(left_piece[3] + left_piece[5], right_piece[3] + right_piece[5]) - min(left_piece[3], right_piece[3]))
+
+                    dist_to_centre = abs(rect[0] + rect[2] // 2 - self.WIDTH // 2)
+
+                    cv2.line(self.frame, (rect[0] + rect[2] // 2, 0), (rect[0] + rect[2] // 2, self.HEIGHT), (0, 255, 0), 1)
+
+                    cv2.putText(self.frame, 'S: %i W: %i'% (rect[1] * self.TARGET_RATIO, rect[0]),
+                                (rect[0] + rect[2] // 2, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.4,
+                                (255, 255, 255), 1, cv2.LINE_AA)
+
+                    if dist_to_centre < min_deviation:
+                        min_deviation = dist_to_centre
+
+                    # dim 14.5 x 6
 
             """
             if points and 10 > points[4] > 4:
