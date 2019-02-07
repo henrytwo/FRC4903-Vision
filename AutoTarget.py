@@ -6,7 +6,9 @@ import time
 import sys
 import os
 import math
-import Communicator
+
+from networktables import NetworkTables
+import logging
 
 class AutoTarget:
     def __init__(self, headless, camID):
@@ -25,6 +27,17 @@ class AutoTarget:
         self.frame = np.ones((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
         self.mask = np.ones((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
         self.res = np.ones((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
+
+        NetworkTables.initialize(server='localhost')
+        #NetworkTables.addEntryListener(changeListener)
+        self.table = NetworkTables.getTable("Vision")
+
+        logging.basicConfig(level=logging.DEBUG)
+
+        self.table.putNumber('locked', 0)
+        self.table.putNumber('heading', 0)
+        self.table.putNumber('deviation', 0)
+        self.table.putNumber('lastUpdated', -1)
 
         cv2.putText(self.frame, 'No signal',
                     (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4,
@@ -59,7 +72,7 @@ class AutoTarget:
         #self.upper_thresh = np.array([255, 255, 255])
         self.upper_thresh = np.array([103, 255, 255])
         #self.lower_thresh = np.array([58, 164, 50])
-        self.lower_thresh = np.array([75, 255, 136])
+        self.lower_thresh = np.array([75, 255, 120])
 
         threading.Thread(target=self.run, args=()).start()
 
@@ -175,17 +188,23 @@ class AutoTarget:
 
                 for r in range(len(right)):
 
-                    if abs(left[l][0] - right[r][0]) <= self.X_DEVIATION and abs(left[l][1] - right[r][1]) <= self.Y_DEVIATION and \
-                            left[l][0] < right[r][0]:
-                        left_piece = left[l][:]
-                        right_piece = right[r][:]
+                    left_piece = left[l][:]
+                    right_piece = right[r][:]
 
+                    boundary_h = max(left_piece[5], right_piece[5])
+                    boundary_w = boundary_h * self.TARGET_RATIO
+
+                    print(boundary_w, boundary_h)
+
+                    if abs(left[l][0] - right[r][0]) <= boundary_w and abs(left[l][1] - right[r][1]) <= boundary_h and left[l][0] < right[r][0]:
                         del right[r]
 
                         break
 
                 else:
                     continue
+
+                print(left_piece, right_piece)
 
                 if not self.headless:
 
@@ -225,56 +244,55 @@ class AutoTarget:
 
                     # dim 14.5 x 6
 
-            """
-            if points and 10 > points[4] > 4:
-                mx = points[0]
-                my = points[1]
+
+            if min_deviation != 999999:
 
                 # angle = FOV * (mx / WIDTH) - FOV / 2
 
-                angle = math.degrees(math.atan((2 * (mx - WIDTH / 2) * math.tan(math.radians(FOV // 2))) / WIDTH))
+                #angle = math.degrees(math.atan((2 * (mx - WIDTH / 2) * math.tan(math.radians(FOV // 2))) / WIDTH))
+
+                angle = 0
 
                 if not self.headless:
                     if angle < 0:
-                        move = 'move left! <='
+                        rotate_msg = 'rotate left! <='
                     elif angle > 0:
-                        move = 'move right! =>'
+                        rotate_msg = 'rotate right! =>'
                     else:
-                        move = 'don\'t move! </>'
+                        rotate_msg = 'don\'t rotate! </>'
 
-                    cv2.line(self.frame, (mx - 10, my), (mx + 10, my), (0, 0, 255), 1)
-                    cv2.line(self.frame, (mx, my - 10), (mx, my + 10), (0, 0, 255), 1)
+                    if min_deviation < 0:
+                        deviation_msg = 'move left! <='
+                    elif min_deviation > 0:
+                        deviation_msg = 'move right! =>'
+                    else:
+                        deviation_msg = 'don\'t move! </>'
+
+                    #cv2.line(self.frame, (mx - 10, my), (mx + 10, my), (0, 0, 255), 1)
+                    #cv2.line(self.frame, (mx, my - 10), (mx, my + 10), (0, 0, 255), 1)
 
                     cv2.putText(self.frame,
-                                'Deviation: %i | Angle to center: %2.2f degrees | (This means you %s)' % (
-                                    points[4] - 8, angle, move),
+                                'Deviation: %i | Angle to center: %2.2f degrees | (This means you %s and %s)' % (
+                                    min_deviation, angle, rotate_msg, deviation_msg),
                                 (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1, cv2.LINE_AA)
 
-                #table.putNumber('heading', angle)
-                #table.putNumber('deviation', points[4] - 8)
-                #table.putNumber('lastUpdated', time.time() + offset)
+                self.table.putNumber('heading', angle)
+                self.table.putNumber('deviation', min_deviation)
+                self.table.putNumber('lastUpdated', time.time())
 
-                #if not target_locked:
-                #    target_locked = True
-                #    table.putNumber('locked', 1)
+                self.table.putNumber('locked', 1)
 
-                    # locked()
             else:
 
-                if target_locked:
-                    target_locked = False
+                self.table.putNumber('heading', 0)
+                self.table.putNumber('deviation', 0)
+                self.table.putNumber('locked', 0)
 
-                    table.putNumber('heading', 9000)
-                    table.putNumber('locked', 0)
-
-                    # unlocked()
-
-                table.putNumber('lastUpdated', time.time() + offset)
+                self.table.putNumber('lastUpdated', time.time())
 
                 if not self.headless:
                     cv2.putText(self.frame, 'Target not found', (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1,
                                 cv2.LINE_AA)
-            """
 
             if not self.headless:
                 cv2.line(self.frame, (self.WIDTH // 2, 0), (self.WIDTH // 2, self.HEIGHT), (0, 0, 255), 1)

@@ -10,6 +10,10 @@ def nothing(x):
     pass
 
 
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 683 * 0.75)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 384 * 0.75)
+
+
 cv2.namedWindow('image')
 cv2.createTrackbar('HU', 'image', 0, 255, nothing)
 cv2.createTrackbar('SU', 'image', 0, 255, nothing)

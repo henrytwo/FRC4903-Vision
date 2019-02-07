@@ -22,10 +22,10 @@ import datetime
 
 from AutoTarget import *
 
-capture=None
+#capture=None
 
 HOST = '127.0.0.1'
-PORT = 8081
+PORT = 8080
 
 CAM_AUTO = 4
 CAM_TELEOP = 2
@@ -48,7 +48,10 @@ class CamHandler(BaseHTTPRequestHandler):
 					try:
 						img = frames[frame_name]['frame']()
 
-						imgRGB=cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+						imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+						#imgRGB=cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+
 						jpg = Image.fromarray(imgRGB)
 
 						with BytesIO() as output:
@@ -61,7 +64,7 @@ class CamHandler(BaseHTTPRequestHandler):
 
 							jpg.save(self.wfile, format='JPEG')
 
-							time.sleep(0.07)
+							time.sleep(0.06)
 					except KeyboardInterrupt:
 						break
 
@@ -96,50 +99,61 @@ class CamHandler(BaseHTTPRequestHandler):
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 	pass
 
-def teleopFrame():
-	rc, img = capture.read()
+class TeleopCam:
+	def __init__(self, id, w, h):
+		self.id = id
 
-	cv2.putText(img, str(datetime.datetime.now()),
-				(10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.3,
-				(255, 255, 255), 1, cv2.LINE_AA)
+		self.capture = cv2.VideoCapture(self.id)
+		self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, w)
+		self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, h)
 
-	return img
+	def getFrame(self):
+		rc, img = self.capture.read()
+
+		cv2.putText(img, str(datetime.datetime.now()),
+					(10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.3,
+					(255, 255, 255), 1, cv2.LINE_AA)
+
+		return img
 
 def main():
-	global capture, frames
-	#capture = cv2.VideoCapture(CAM_TELEOP)
-	#capture.set(cv2.CAP_PROP_FRAME_WIDTH, 683 * 0.75)
-	#capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 384 * 0.75)
+	global frames
 
-	at = AutoTarget(False, CAM_AUTO)
+	teleopBoi = TeleopCam(CAM_TELEOP, int(683 * 0.75), int(384 * 0.75))
+	otherBoi = TeleopCam(CAM_AUTO, 320, 240)
 
 	frames = {
-		'autoFrame': {
-			'frame': at.get_frame,
-			'humanName': 'CV Raw Feed'
+		'teleopFrame':  {
+			'frame': teleopBoi.getFrame,
+			'humanName': 'Teleop Raw Feed'
 		},
-		'autoMask': {
-			'frame': at.get_mask,
-			'humanName': 'CV Mask'
-		},
-		'autoRes': {
-			'frame': at.get_res,
-			'humanName': 'CV Overlay'
+		'slideFrame': {
+			'frame': otherBoi.getFrame,
+			'humanName': 'Other stuff Feed'
 		}
 	}
 
-	"""	'teleopFrame':  {
-			'frame': teleopFrame,
-			'humanName': 'Teleop Raw Feed'
-		}
-			"""
+	""",
+			'autoFrame': {
+				'frame': at.get_frame,
+				'humanName': 'CV Raw Feed'
+			},
+			'autoMask': {
+				'frame': at.get_mask,
+				'humanName': 'CV Mask'
+			},
+			'autoRes':  {
+				'frame': at.get_res,
+				'humanName': 'CV Overlay'
+			}"""
 
 	try:
 		server = ThreadedHTTPServer((HOST, PORT), CamHandler)
 		print("Server started @ (%s:%i)" % (HOST, PORT))
 		server.serve_forever()
 	except KeyboardInterrupt:
-		capture.release()
+		#capture.release()
+		#capture.release()
 		server.socket.close()
 
 if __name__ == '__main__':
