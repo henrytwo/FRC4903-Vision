@@ -21,13 +21,16 @@ import time
 import datetime
 
 from AutoTarget import *
+import subprocess
 
-#capture=None
+if b'10.49.3.10' in subprocess.Popen(['ifconfig'], stdout=subprocess.PIPE).communicate()[0]:
+	HOST = '10.49.3.10'
+else:
+	HOST = '127.0.0.1'
 
-HOST = '127.0.0.1'
 PORT = 8080
 
-CAM_AUTO = 4
+CAM_AUTO = 0
 CAM_TELEOP = 2
 
 class CamHandler(BaseHTTPRequestHandler):
@@ -64,7 +67,7 @@ class CamHandler(BaseHTTPRequestHandler):
 
 							jpg.save(self.wfile, format='JPEG')
 
-							time.sleep(0.06)
+							time.sleep(0.01)
 					except KeyboardInterrupt:
 						break
 
@@ -100,15 +103,28 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 	pass
 
 class TeleopCam:
-	def __init__(self, id, w, h):
+	def __init__(self, id, w, h, enforced):
 		self.id = id
+		self.enforced = enforced
+		self.w = w
+		self.h = h
 
 		self.capture = cv2.VideoCapture(self.id)
-		self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, w)
-		self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, h)
 
+		if not self.enforced:
+			self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, w)
+			self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, h)
+		else:
+
+			print('Enforcing resolution')
+
+			self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, enforced[0])
+			self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, enforced[1])
 	def getFrame(self):
 		rc, img = self.capture.read()
+
+		if self.enforced:
+			img = cv2.resize(img, (self.w, self.h))
 
 		cv2.putText(img, str(datetime.datetime.now()),
 					(10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.3,
@@ -119,8 +135,8 @@ class TeleopCam:
 def main():
 	global frames
 
-	teleopBoi = TeleopCam(CAM_TELEOP, int(683 * 0.75), int(384 * 0.75))
-	otherBoi = TeleopCam(CAM_AUTO, 320, 240)
+	teleopBoi = TeleopCam(CAM_TELEOP, int(683 * 0.35), int(384 * 0.35), (int(683 * 0.65), int(384 * 0.65)))
+	otherBoi = TeleopCam(CAM_AUTO, int(683 * 0.35), int(384 * 0.35), (int(683 * 0.5), int(384 * 0.5)))
 
 	frames = {
 		'teleopFrame':  {

@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-cap = cv2.VideoCapture(4)
+cap = cv2.VideoCapture(7)
 
 FOV = 57.62158749
 
@@ -10,8 +10,8 @@ def nothing(x):
     pass
 
 
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 683 * 0.75)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 384 * 0.75)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1366)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 768)
 
 
 cv2.namedWindow('image')
