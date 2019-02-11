@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-cap = cv2.VideoCapture(7)
+cap = cv2.VideoCapture(2)
 
 FOV = 57.62158749
 

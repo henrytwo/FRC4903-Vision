@@ -30,8 +30,50 @@ else:
 
 PORT = 8080
 
-CAM_AUTO = 0
-CAM_TELEOP = 2
+CAM_DRIVE = 'USB_2.0_Camera' #'/dev/v4l/by-id/usb-HD_Camera_Manufacturer_USB_2.0_Camera-video-index0'
+CAM_MECH = 'Logitech_Webcam_C930e' #'/dev/v4l/by-id/usb-046d_Logitech_Webcam_C930e_74B595EE-video-index0'
+
+devices = subprocess.Popen(['ls', '/dev'], stdout=subprocess.PIPE).communicate()[0].split(b'\n')
+model_to_id = {}
+
+def get_model(devID):
+
+	try:
+		data = subprocess.Popen(('udevadm info --query=all /dev/video' + str(devID)).split(), stdout=subprocess.PIPE).communicate()[0].split(b'\n')
+
+		for d in data:
+			if b'ID_MODEL' in d:
+
+				return d.split(b'=')[1]
+	except:
+		traceback.print_exc()
+
+	return -1
+
+for d in devices:
+	if b'video' in d:
+
+		d = int(d.strip(b'video'))
+
+		cam_model = get_model(d)
+
+		#print('GG', d, cam_model)
+
+		works = False
+
+		try:
+			c = cv2.VideoCapture(d)
+			works = c.read()[1]
+		except:
+			pass
+
+		if works:
+			model_to_id[cam_model] = d
+
+
+print(model_to_id)
+
+
 
 class CamHandler(BaseHTTPRequestHandler):
 	def do_GET(self):
@@ -103,11 +145,13 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 	pass
 
 class TeleopCam:
-	def __init__(self, id, w, h, enforced):
+	def __init__(self, id, w, h, enforced, rotate):
 		self.id = id
 		self.enforced = enforced
 		self.w = w
 		self.h = h
+
+		self.rotate = rotate
 
 		self.capture = cv2.VideoCapture(self.id)
 
@@ -126,6 +170,9 @@ class TeleopCam:
 		if self.enforced:
 			img = cv2.resize(img, (self.w, self.h))
 
+		if self.rotate:
+			img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+
 		cv2.putText(img, str(datetime.datetime.now()),
 					(10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.3,
 					(255, 255, 255), 1, cv2.LINE_AA)
@@ -135,8 +182,9 @@ class TeleopCam:
 def main():
 	global frames
 
-	teleopBoi = TeleopCam(CAM_TELEOP, int(683 * 0.35), int(384 * 0.35), (int(683 * 0.65), int(384 * 0.65)))
-	otherBoi = TeleopCam(CAM_AUTO, int(683 * 0.35), int(384 * 0.35), (int(683 * 0.5), int(384 * 0.5)))
+	"""
+	teleopBoi = TeleopCam(CAM_DRIVE, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)), False)
+	otherBoi = TeleopCam(CAM_MECH, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)), True)
 
 	frames = {
 		'teleopFrame':  {
@@ -148,6 +196,7 @@ def main():
 			'humanName': 'Other stuff Feed'
 		}
 	}
+	"""
 
 	""",
 			'autoFrame': {
