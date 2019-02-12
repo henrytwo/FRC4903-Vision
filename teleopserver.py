@@ -18,6 +18,7 @@ from PIL import Image
 from http.server import BaseHTTPRequestHandler,HTTPServer
 from socketserver import ThreadingMixIn
 from io import BytesIO
+import os
 import time
 import datetime
 
@@ -41,9 +42,23 @@ class CamHandler(BaseHTTPRequestHandler):
 
 		print(self.path)
 
-		if self.path.endswith('flip'):
+		if self.path == '/reboot':
+			self.send_response(200)
+			self.send_header('Content-type', 'text/html')
+			self.end_headers()
+			self.wfile.write('ok')
+
+			os.system('sudo reboot')
+
+
+		elif self.path == '/flip':
 			vert.append(vert[0])
 			del vert[0]
+
+			self.send_response(200)
+			self.send_header('Content-type', 'text/html')
+			self.end_headers()
+			self.wfile.write('ok')
 
 		elif self.path.endswith('.mjpg'):
 
@@ -166,7 +181,7 @@ if __name__ == '__main__':
 			'humanName': 'Teleop Raw Feed'
 		},
 		'mechFrame': {
-			'frame': mechCam.getFrame,
+			'frame': primaryCam.getFrame,
 			'humanName': 'Other stuff Feed'
 		}
 	}

@@ -26,8 +26,14 @@
             margin: 0;
         }}
 
-        #time, #flip {{
+        #flip {{
             top: 20px;
+            right: 30px;
+            position: absolute;
+        }}
+
+        #reboot {{
+            top: 50px;
             right: 30px;
             position: absolute;
         }}
@@ -35,15 +41,15 @@
 
 
 </head>
-<body style="padding: 0; margin: 0;">
+<body style="padding: 0; margin: 0; background-color: black;">
     <div id="upper-highlight">
         <h1>FRC 4903 Vision Dashboard</h1>
         <p style="line-height: 0.05em"><i>"Dedicated to the great leader"</i></p>
 
 
         <input type="button" id="flip" value="Flip Cameras" />
+        <input type="button" id="reboot" value="Reboot Co-Processor" />
 
-        <p id="time">Holdon... getting the time</p>
     </div>
 
     {CAMS}
@@ -52,18 +58,29 @@
 
 <script>
 
-    function setTime() {{
-        document.getElementById("time").innerHTML = Date()
-    }}
-
-    setTime();
-
-    setInterval(setTime, 1000);
 
     $('#flip').click(function() {{
        $.get('flip', function(data) {{
 
        }})
+    }});
+
+    $('#reboot').click(function() {{
+        var response = confirm('Are you sure you want to reboot? This may take up to 1 minute!');
+
+        if (response) {{
+
+            var doubleConfirm = confirm('ARE YOU ABSOLUTELY SURE YOU WANT TO REBOOT?');
+
+            if (doubleConfirm) {{
+                $.get('reboot', function (data) {{
+                    {{
+                        alert('Reboot command issued.')
+
+                    }}
+                }})
+            }}
+        }}
     }});
 
 </script>
