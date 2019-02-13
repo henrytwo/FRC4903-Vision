@@ -69,10 +69,10 @@ class AutoTarget:
 
         #self.HEIGHT, self.WIDTH, _ = self.cap.read()[1].shape
 
-        #self.upper_thresh = np.array([255, 255, 255])
-        self.upper_thresh = np.array([103, 255, 255])
-        #self.lower_thresh = np.array([58, 164, 50])
-        self.lower_thresh = np.array([75, 255, 120])
+        self.upper_thresh = np.array([255, 255, 255])
+        #self.upper_thresh = np.array([103, 255, 255])
+        self.lower_thresh = np.array([0, 0, 112])
+        #self.lower_thresh = np.array([75, 255, 120])
 
         threading.Thread(target=self.run, args=()).start()
 

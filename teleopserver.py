@@ -14,6 +14,7 @@
 
 import cv2
 import glob
+import numpy as np
 from PIL import Image
 from http.server import BaseHTTPRequestHandler,HTTPServer
 from socketserver import ThreadingMixIn
@@ -32,8 +33,8 @@ else:
 
 PORT = 8080
 
-CAM_DRIVE = '/dev/v4l/by-id/usb-Guillemot_Corporation_USB_Camera-video-index0' #0 #'/dev/v4l/by-id/usb-HD_Camera_Manufacturer_USB_2.0_Camera-video-index0'
-CAM_MECH = '/dev/v4l/by-id/usb-SunplusIT_INC._Integrated_Camera-video-index1' #1 #'/dev/v4l/by-id/usb-046d_Logitech_Webcam_C930e_74B595EE-video-index0'
+CAM_DRIVE = 0 #'/dev/v4l/by-id/usb-HD_Camera_Manufacturer_USB_2.0_Camera-video-index0'
+CAM_MECH = 2 #'/dev/v4l/by-id/usb-046d_Logitech_Webcam_C930e_74B595EE-video-index0'
 
 vert = ['primaryFrame', 'mechFrame']
 
@@ -46,7 +47,7 @@ class CamHandler(BaseHTTPRequestHandler):
 			self.send_response(200)
 			self.send_header('Content-type', 'text/html')
 			self.end_headers()
-			self.wfile.write('ok')
+			self.wfile.write(b'ok')
 
 			os.system('sudo reboot')
 
@@ -58,20 +59,20 @@ class CamHandler(BaseHTTPRequestHandler):
 			self.send_response(200)
 			self.send_header('Content-type', 'text/html')
 			self.end_headers()
-			self.wfile.write('ok')
+			self.wfile.write(b'ok')
 
 		elif self.path.endswith('.mjpg'):
 
-			frame_name = self.path[1:].split('.mjpg')[0]
+			frame_name = int(self.path[1:].split('.mjpg')[0])
 
-			if frame_name in frames:
+			if 0 <= frame_name < len(frames):
 
 				self.send_response(200)
 				self.send_header('Content-type','multipart/x-mixed-replace; boundary=--jpgboundary')
 				self.end_headers()
 				while True:
 					try:
-						img = frames[frame_name]['frame']()
+						img = frames[frame_name]()
 
 						if vert[0] == frame_name:
 							img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
@@ -107,8 +108,6 @@ class CamHandler(BaseHTTPRequestHandler):
 
 			with open('public' + self.path, 'r') as file:
 
-
-
 				self.send_response(200)
 				self.send_header('Content-type', 'text/js')
 				self.end_headers()
@@ -124,10 +123,12 @@ class CamHandler(BaseHTTPRequestHandler):
 					cams = ''
 					cam_page_template = cam_page.read()
 
-					for camName in frames:
-						cams += cam_page_template.format(MACHINENAME=camName, PORT=PORT, HOST=HOST)
+					#for i in range(len(frames)):
+					#	cams += cam_page_template.format(MACHINENAME=str(i), PORT=PORT, HOST=HOST)
 
-					page = main_page.read().format(CAMS=cams).encode()
+					# CINRGY HARDCODE INCOMMING
+
+					page = main_page.read().format(CAM0=cam_page_template.format(MACHINENAME='0', PORT=PORT, HOST=HOST), CAM1=cam_page_template.format(MACHINENAME='1', PORT=PORT, HOST=HOST), CAM2=cam_page_template.format(MACHINENAME='2', PORT=PORT, HOST=HOST)).encode()
 
 					self.send_response(200)
 					self.send_header('Content-type','text/html')
@@ -164,10 +165,6 @@ class TeleopCam:
 		if self.enforced:
 			img = cv2.resize(img, (self.w, self.h))
 
-		#cv2.putText(img, str(datetime.datetime.now()),
-		#			(10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.3,
-		#			(255, 255, 255), 1, cv2.LINE_AA)
-
 		return img
 
 primaryCam = TeleopCam(CAM_DRIVE, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)))
@@ -175,17 +172,7 @@ mechCam = TeleopCam(CAM_MECH, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65)
 
 if __name__ == '__main__':
 
-	frames = {
-		'primaryFrame': {
-			'frame': primaryCam.getFrame,
-			'humanName': 'Teleop Raw Feed'
-		},
-		'mechFrame': {
-			'frame': primaryCam.getFrame,
-			'humanName': 'Other stuff Feed'
-		}
-	}
-
+	frames = [primaryCam.getFrame, mechCam.getFrame, primaryCam.getFrame]
 
 	try:
 		server = ThreadedHTTPServer((HOST, PORT), CamHandler)
