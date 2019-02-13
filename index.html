@@ -63,31 +63,7 @@
     <div id="upper-highlight">
         <h3>FRC 4903 Vision Dashboard</h3>
 
-        <div class="primary">
-            <select id="frame-picker0">
-                <option value="0" selected>Cam 0</option>
-                <option value="1">Cam 1</option>
-                <option value="2">Cam 2</option>
-            </select>
-
-            <select id="frame-picker1">
-                <option value="0">Cam 0</option>
-                <option value="1" selected>Cam 1</option>
-                <option value="2">Cam 2</option>
-            </select>
-        </div>
-
-        <div class="secondary" hidden>
-            <select id="frame-picker0">
-                <option value="0" selected>Cam 0</option>
-                <option value="1">Cam 1</option>
-                <option value="2" selected>Cam 2</option>
-            </select>
-        </div>
-
-
-
-        <input type="button" id="swap" value="Swap Screen" />
+        <a href="secondary" target="_blank"><input type="button" id="swap" value="Secondary Frame" /></a>
         <input type="button" id="reboot" value="Reboot Co-Processor" />
 
     </div>
@@ -96,24 +72,7 @@
 
     <div style="width: 100vw; height: calc(100vh - 30px);">
 
-        <div class="primary">
-            <div style="height: calc(100vh - 30px); width: calc(9 * (100vh - 30px)/16); background-color: rebeccapurple; float: left;">
-                {CAM0}
-
-            </div>
-
-            <div style="height: calc(100vh - 30px); width: calc(100vw - 9 * (100vh - 30px)/16); display: inline-block; float: right;">
-
-                <div style="height: calc(9 * (100vw - 9 * (100vh - 30px)/16) / 16); width: calc(100vw - 9 * (100vh - 30px)/16); background-color: darkblue">
-                    {CAM1}
-                </div>
-
-            </div>
-        </div>
-
-        <div class="secondary" style="height: calc((100vh - 30px)); width: calc(16 * (100vh - 30px) / 9); background-color: green; float: left" hidden>
-            {CAM2}
-        </div>
+        {FRAME}
 
     </div>
 
@@ -121,32 +80,6 @@
 </body>
 
 <script>
-
-    $('#frame-picker0').change(function() {{
-        $('#frame-0').attr("src", window.location.origin + '/' + $('#frame-picker0').val() + '.mjpg');
-    }});
-
-    $('#frame-picker1').change(function() {{
-        $('#frame-1').attr("src", window.location.origin + '/' + $('#frame-picker1').val() + '.mjpg');
-    }});
-
-
-    $('#frame-picker2').change(function() {{
-        $('#frame-2').attr("src", window.location.origin + '/' + $('#frame-picker2').val() + '.mjpg');
-    }});
-
-
-
-    $('#swap').click(function() {{
-        if ($(".primary").is(":visible")) {{
-            $(".primary").hide();
-            $(".secondary").show();
-        }} else {{
-            $(".primary").show();
-            $(".secondary").hide();
-        }}
-    }});
-
 
     $('#reboot').click(function() {{
         var response = confirm('Are you sure you want to reboot? This may take up to 1 minute!');
