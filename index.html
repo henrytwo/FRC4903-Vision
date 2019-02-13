@@ -26,9 +26,9 @@
             margin: 0;
         }}
 
-        #hide {{
-            top: 20px;
-            right: 30px;
+        #swap {{
+            top: 4px;
+            right: 170px;
             position: absolute;
         }}
 
@@ -63,28 +63,31 @@
     <div id="upper-highlight">
         <h3>FRC 4903 Vision Dashboard</h3>
 
+        <div class="primary">
+            <select id="frame-picker0">
+                <option value="0" selected>Cam 0</option>
+                <option value="1">Cam 1</option>
+                <option value="2">Cam 2</option>
+            </select>
 
-        <select id="frame-picker0">
-            <option value="0" selected>Cam 0</option>
-            <option value="1">Cam 1</option>
-            <option value="2">Cam 2</option>
-        </select>
+            <select id="frame-picker1">
+                <option value="0">Cam 0</option>
+                <option value="1" selected>Cam 1</option>
+                <option value="2">Cam 2</option>
+            </select>
+        </div>
 
-        <select id="frame-picker1">
-            <option value="0">Cam 0</option>
-            <option value="1" selected>Cam 1</option>
-            <option value="2">Cam 2</option>
-        </select>
-
-        <select id="frame-picker2">
-            <option value="0" selected>Cam 0</option>
-            <option value="1">Cam 1</option>
-            <option value="2" selected>Cam 2</option>
-        </select>
+        <div class="secondary" hidden>
+            <select id="frame-picker0">
+                <option value="0" selected>Cam 0</option>
+                <option value="1">Cam 1</option>
+                <option value="2" selected>Cam 2</option>
+            </select>
+        </div>
 
 
 
-        <!--<input type="button" id="hide" value="Hide" />-->
+        <input type="button" id="swap" value="Swap Screen" />
         <input type="button" id="reboot" value="Reboot Co-Processor" />
 
     </div>
@@ -92,24 +95,26 @@
     <!-- UGLY CODE WARNING!!!! -->
 
     <div style="width: 100vw; height: calc(100vh - 30px);">
-        <div style="height: calc(100vh - 30px); width: calc(9 * (100vh - 30px)/16); background-color: rebeccapurple; float: left;">
-            {CAM0}
 
-        </div>
+        <div class="primary">
+            <div style="height: calc(100vh - 30px); width: calc(9 * (100vh - 30px)/16); background-color: rebeccapurple; float: left;">
+                {CAM0}
 
-        <div style="height: calc(100vh - 30px); width: calc(100vw - 9 * (100vh - 30px)/16); display: inline-block; float: right;">
-
-            <div style="height: calc(0.7 * (100vh - 30px)); width: calc(16 * (0.7 * (100vh - 30px)) / 9); background-color: darkblue">
-                {CAM1}
             </div>
 
-            <div style="height: calc(0.3 * (100vh - 30px)); width: calc(16 * (0.3 * (100vh - 30px)) / 9); background-color: green; float: left">
-                {CAM2}
+            <div style="height: calc(100vh - 30px); width: calc(100vw - 9 * (100vh - 30px)/16); display: inline-block; float: right;">
+
+                <div style="height: calc(9 * (100vw - 9 * (100vh - 30px)/16) / 16); width: calc(100vw - 9 * (100vh - 30px)/16); background-color: darkblue">
+                    {CAM1}
+                </div>
+
             </div>
-
-
-
         </div>
+
+        <div class="secondary" style="height: calc((100vh - 30px)); width: calc(16 * (100vh - 30px) / 9); background-color: green; float: left" hidden>
+            {CAM2}
+        </div>
+
     </div>
 
 
@@ -132,16 +137,16 @@
 
 
 
-    $('#hide').click(function() {{
-        $("#upper-highlight").hide();
+    $('#swap').click(function() {{
+        if ($(".primary").is(":visible")) {{
+            $(".primary").hide();
+            $(".secondary").show();
+        }} else {{
+            $(".primary").show();
+            $(".secondary").hide();
+        }}
     }});
 
-
-    $('#flip').click(function() {{
-       $.get('flip', function(data) {{
-
-       }})
-    }});
 
     $('#reboot').click(function() {{
         var response = confirm('Are you sure you want to reboot? This may take up to 1 minute!');

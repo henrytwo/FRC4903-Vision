@@ -34,7 +34,7 @@ else:
 PORT = 8080
 
 CAM_DRIVE = 0 #'/dev/v4l/by-id/usb-HD_Camera_Manufacturer_USB_2.0_Camera-video-index0'
-CAM_MECH = 2 #'/dev/v4l/by-id/usb-046d_Logitech_Webcam_C930e_74B595EE-video-index0'
+CAM_MECH = 0 #'/dev/v4l/by-id/usb-046d_Logitech_Webcam_C930e_74B595EE-video-index0'
 
 vert = ['primaryFrame', 'mechFrame']
 
@@ -168,11 +168,11 @@ class TeleopCam:
 		return img
 
 primaryCam = TeleopCam(CAM_DRIVE, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)))
-mechCam = TeleopCam(CAM_MECH, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)))
+#mechCam = TeleopCam(CAM_MECH, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)))
 
 if __name__ == '__main__':
 
-	frames = [primaryCam.getFrame, mechCam.getFrame, primaryCam.getFrame]
+	frames = [primaryCam.getFrame, primaryCam.getFrame, primaryCam.getFrame]
 
 	try:
 		server = ThreadedHTTPServer((HOST, PORT), CamHandler)
