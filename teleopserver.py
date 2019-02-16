@@ -114,11 +114,11 @@ class CamHandler(BaseHTTPRequestHandler):
 				return
 
 		else:
-			main_page = open('index.html', 'r').read()
-			cam_page = open('cam.html', 'r').read()
+			main_page = open('views/index.html', 'r').read()
+			cam_page = open('views/cam.html', 'r').read()
 
-			primary_page = open('primary.html', 'r').read()
-			secondary_page = open('secondary.html', 'r').read()
+			primary_page = open('views/primary.html', 'r').read()
+			secondary_page = open('views/secondary.html', 'r').read()
 
 			# CINRGY HARDCODE INCOMMING
 
@@ -183,7 +183,6 @@ mechCam = TeleopCam(CAM_MECH, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65)
 
 if __name__ == '__main__':
 
-	#frames = [mechCam.getFrame, primaryCam.getFrame, lineCam.getFrame]
 	frames = [mechCam.getFrame, primaryCam.getFrame] #, primaryCam.getFrame]
 
 	try:
