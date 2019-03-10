@@ -31,7 +31,6 @@ except:
 	ON_PI = False
 	print('This is not a pi.')
 
-from AutoTarget import *
 import subprocess
 
 while ON_PI and not b'10.49.3.10' in subprocess.Popen(['ifconfig'], stdout=subprocess.PIPE).communicate()[0]:
@@ -147,12 +146,13 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 	pass
 
 class TeleopCam:
-	def __init__(self, id, w, h, enforced, rotated):
+	def __init__(self, id, w, h, enforced, rotated, overlay):
 		self.id = id
 		self.enforced = enforced
 		self.w = w
 		self.h = h
 		self.rotated = rotated
+		self.overlay = overlay
 
 		self.capture = cv2.VideoCapture(self.id)
 
@@ -169,16 +169,25 @@ class TeleopCam:
 	def getFrame(self):
 		rc, img = self.capture.read()
 
+		if (self.overlay):
+			img = img[:, 180:1250]
+
 		if self.enforced:
 			img = cv2.resize(img, (self.w, self.h))
 
 		if self.rotated:
 			img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
 
+		if self.overlay:
+			cv2.line(img, (int(self.w * 0.55), 0), (int(self.w * 0.56), self.h), (0, 0, 255), 1)
+
+
+
+
 		return img
 
-primaryCam = TeleopCam(CAM_DRIVE, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)), False)
-mechCam = TeleopCam(CAM_MECH, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)), True)
+primaryCam = TeleopCam(CAM_DRIVE, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), 330), False, True)
+mechCam = TeleopCam(CAM_MECH, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)), True, False)
 #lineCam = TeleopCam(CAM_LINE, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)), False)
 
 if __name__ == '__main__':
