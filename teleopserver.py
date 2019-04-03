@@ -23,6 +23,8 @@ import os
 import time
 import datetime
 
+from AutoTarget import *
+
 try:
 	from gpiozero import LED
 
@@ -194,12 +196,14 @@ class TeleopCam:
 #(int(self.w * 0.55), 0), (int(self.w * 0.56), self.h)
 
 primaryCam = TeleopCam(CAM_DRIVE, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)), 180, [[(0.55, 0), (0.56, 1)]])
-mechCam = TeleopCam(CAM_MECH, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)), 90, [[(0, 0.07), (1, 0.07)], [(0, 0.655), (1, 0.655)]])
+#mechCam = TeleopCam(CAM_MECH, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)), 90, [[(0, 0.07), (1, 0.07)], [(0, 0.655), (1, 0.655)]])
 #lineCam = TeleopCam(CAM_LINE, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)), False)
+
+autoTarget = AutoTarget(True, CAM_MECH)
 
 if __name__ == '__main__':
 
-	frames = [mechCam.getFrame, primaryCam.getFrame] #, primaryCam.getFrame]
+	frames = [autoTarget.get_frame, primaryCam.getFrame] #, primaryCam.getFrame]
 
 	try:
 		server = ThreadedHTTPServer((HOST, PORT), CamHandler)
