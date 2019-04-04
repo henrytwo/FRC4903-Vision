@@ -23,8 +23,6 @@ import os
 import time
 import datetime
 
-from AutoTarget import *
-
 try:
 	from gpiozero import LED
 
@@ -148,13 +146,13 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 	pass
 
 class TeleopCam:
-	def __init__(self, id, w, h, enforced, rotation, points):
+	def __init__(self, id, w, h, enforced, rotated, overlay):
 		self.id = id
 		self.enforced = enforced
 		self.w = w
 		self.h = h
-		self.rotation = rotation
-		self.points = points
+		self.rotated = rotated
+		self.overlay = overlay
 
 		self.capture = cv2.VideoCapture(self.id)
 
@@ -171,39 +169,30 @@ class TeleopCam:
 	def getFrame(self):
 		rc, img = self.capture.read()
 
+		if (self.overlay):
+			img = img[:, 180:1250]
+
 		if self.enforced:
 			img = cv2.resize(img, (self.w, self.h))
 
-		if self.rotation == 90:
+		if self.rotated:
 			img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-		elif self.rotation == 180:
-			img = cv2.rotate(img, cv2.ROTATE_180)
 
-		if self.points:
+		if self.overlay:
+			cv2.line(img, (int(self.w * 0.55), 0), (int(self.w * 0.56), self.h), (0, 0, 255), 1)
 
-			if self.rotation == 90:
-				w = self.h
-				h = self.w
-			else:
-				w = self.w
-				h = self.h
 
-			for point in self.points:
-				cv2.line(img, (int(point[0][0] * w), int(point[0][1] * h)), (int(point[1][0] * w), int(point[1][1] * h)), (0, 0, 255), 1)
+
 
 		return img
 
-#(int(self.w * 0.55), 0), (int(self.w * 0.56), self.h)
-
-primaryCam = TeleopCam(CAM_DRIVE, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)), 180, [[(0.55, 0), (0.56, 1)]])
-#mechCam = TeleopCam(CAM_MECH, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)), 90, [[(0, 0.07), (1, 0.07)], [(0, 0.655), (1, 0.655)]])
+primaryCam = TeleopCam(CAM_DRIVE, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), 330), False, True)
+mechCam = TeleopCam(CAM_MECH, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)), True, False)
 #lineCam = TeleopCam(CAM_LINE, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)), False)
-
-autoTarget = AutoTarget(True, CAM_MECH)
 
 if __name__ == '__main__':
 
-	frames = [autoTarget.get_frame, primaryCam.getFrame] #, primaryCam.getFrame]
+	frames = [mechCam.getFrame, primaryCam.getFrame] #, primaryCam.getFrame]
 
 	try:
 		server = ThreadedHTTPServer((HOST, PORT), CamHandler)
