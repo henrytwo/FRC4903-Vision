@@ -23,6 +23,7 @@ import os
 import time
 import datetime
 
+# Check if on the PI for development purposes
 try:
 	from gpiozero import LED
 
@@ -33,53 +34,66 @@ except:
 
 import subprocess
 
+# If on PI, keep waiting until network is online/connected
 while ON_PI and not b'10.49.3.10' in subprocess.Popen(['ifconfig'], stdout=subprocess.PIPE).communicate()[0]:
 	time.sleep(1)
 	print('Waiting for network...')
 
+# If on PI, set PI address to PI
+# Otherwise... don't - and switch to localhost
 if b'10.49.3.10' in subprocess.Popen(['ifconfig'], stdout=subprocess.PIPE).communicate()[0]:
 	HOST = '10.49.3.10'
 else:
 	HOST = '127.0.0.1'
 
+# Default non SSL web port
 PORT = 80
 
-CAM_DRIVE = 0 #'/dev/v4l/by-path/pci-0000:00:14.0-usb-0:2:1.0-video-index0'
-CAM_MECH = '/dev/v4l/by-path/pci-0000:00:14.0-usb-0:1:1.0-video-index0'
-CAM_LINE = '/dev/v4l/by-path/pci-0000:00:14.0-usb-0:3:1.0-video-index0'
+# Camera location based on v4l address
+CAM_DRIVE = '/dev/v4l/by-path/platform-3f980000.usb-usb-0:1.3:1.0-video-index0'
+CAM_MECH = '/dev/v4l/by-path/platform-3f980000.usb-usb-0:1.2:1.0-video-index0'
 
 class CamHandler(BaseHTTPRequestHandler):
+
+	# Called when GET request is received
 	def do_GET(self):
 
 		print(self.path)
 
+		# Reboot path
 		if self.path == '/reboot':
 			self.send_response(200)
 			self.send_header('Content-type', 'text/html')
 			self.end_headers()
 			self.wfile.write(b'ok')
 
-			os.system('sudo reboot')
+			os.system('sudo reboot') # Executes reboot
 
+		# Any request for mjpg frame
 		elif self.path.endswith('.mjpg'):
 
 			frame_name = int(self.path[1:].split('.mjpg')[0])
 
+			# If frame is in valid domain
 			if 0 <= frame_name < len(frames):
 
 				self.send_response(200)
 				self.send_header('Content-type','multipart/x-mixed-replace; boundary=--jpgboundary')
 				self.end_headers()
+
+				# Start frame send loop
 				while True:
 					try:
+
+						# Get frame
 						img = frames[frame_name]()
 
+						# Turn greyscale
 						imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-						#imgRGB=cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
 
 						jpg = Image.fromarray(imgRGB)
 
+						# Convert frame to jpg byte magic
 						with BytesIO() as output:
 							jpg.save(output, format='JPEG')
 
@@ -90,6 +104,9 @@ class CamHandler(BaseHTTPRequestHandler):
 
 							jpg.save(self.wfile, format='JPEG')
 
+							# Delay to maintain framerate
+							# Too low and frames will buffer
+							# Too high and framerate will suffer
 							time.sleep(0.01)
 					except KeyboardInterrupt:
 						break
@@ -101,8 +118,10 @@ class CamHandler(BaseHTTPRequestHandler):
 
 			return
 
+		# Request for public resources
 		elif 'public' + self.path in glob.glob('public/*'):
 
+			# Find resource and send
 			with open('public' + self.path, 'r') as file:
 
 				self.send_response(200)
@@ -112,7 +131,10 @@ class CamHandler(BaseHTTPRequestHandler):
 
 				return
 
+		# Otherwise, send the webpage
 		else:
+
+			# Extract HTML base
 			main_page = open('views/index.html', 'r').read()
 			cam_page = open('views/cam.html', 'r').read()
 
@@ -121,18 +143,20 @@ class CamHandler(BaseHTTPRequestHandler):
 
 			# CINRGY HARDCODE INCOMMING
 
-			#, CAM2=cam_page_template.format(MACHINENAME='2', PORT=PORT, HOST=HOST)
-
+			# Secondary page for future use
 			if self.path == '/secondary':
 				print('Secondary frame injection')
 
 				frame = secondary_page.format(CAM2=cam_page.format(MACHINENAME='2', PORT=PORT, HOST=HOST))
 
+			# Main page
 			else:
 				print('Primary frame injection')
 
+				# Inject inner HTML into template with camera info
 				frame = primary_page.format(CAM0=cam_page.format(MACHINENAME='0', PORT=PORT, HOST=HOST), CAM1=cam_page.format(MACHINENAME='1', PORT=PORT, HOST=HOST))
 
+			# Send page to client
 			page = main_page.format(FRAME=frame).encode()
 
 			self.send_response(200)
@@ -141,11 +165,15 @@ class CamHandler(BaseHTTPRequestHandler):
 			self.wfile.write(page)
 			return
 
-
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 	pass
 
+# Camera object
 class TeleopCam:
+
+	# ID name, frame width, frame height, (enforced frame size tuple), rotation angle, points for line overlay
+	# Enforced is the size CV tells the webcam to use
+	# Frame w and h is the size of the frame that the obj will return after processing
 	def __init__(self, id, w, h, enforced, rotation, points):
 		self.id = id
 		self.enforced = enforced
@@ -154,6 +182,7 @@ class TeleopCam:
 		self.rotation = rotation
 		self.points = points
 
+		# Establish CV video caputre
 		self.capture = cv2.VideoCapture(self.id)
 
 		if not self.enforced:
@@ -169,6 +198,7 @@ class TeleopCam:
 	def getFrame(self):
 		rc, img = self.capture.read()
 
+		# Process image transformation
 		if self.enforced:
 			img = cv2.resize(img, (self.w, self.h))
 
@@ -177,6 +207,7 @@ class TeleopCam:
 		elif self.rotation == 180:
 			img = cv2.rotate(img, cv2.ROTATE_180)
 
+		# Draw lines for overlay
 		if self.points:
 
 			if self.rotation == 90:
@@ -191,21 +222,20 @@ class TeleopCam:
 
 		return img
 
-#(int(self.w * 0.55), 0), (int(self.w * 0.56), self.h)
-
+# Create camera objects
 primaryCam = TeleopCam(CAM_DRIVE, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)), 180, [[(0.55, 0), (0.56, 1)]])
 mechCam = TeleopCam(CAM_MECH, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)), 90, [[(0, 0.07), (1, 0.07)], [(0, 0.655), (1, 0.655)]])
-#lineCam = TeleopCam(CAM_LINE, int(683 * 0.30), int(384 * 0.30), (int(683 * 0.65), int(384 * 0.65)), False)
 
 if __name__ == '__main__':
 
-	frames = [mechCam.getFrame, primaryCam.getFrame] #, primaryCam.getFrame]
+	# List with frame retreval functions
+	frames = [mechCam.getFrame, primaryCam.getFrame]
 
 	try:
+		# Start HTTP server
 		server = ThreadedHTTPServer((HOST, PORT), CamHandler)
 		print("Server started @ (%s:%i)" % (HOST, PORT))
 		server.serve_forever()
 	except KeyboardInterrupt:
-		# capture.release()
-		# capture.release()
+
 		server.socket.close()
